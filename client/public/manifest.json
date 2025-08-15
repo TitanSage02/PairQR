@@ -1,0 +1,83 @@
+{
+  "name": "InstantShare - Instant Secure File Sharing",
+  "short_name": "InstantShare",
+  "description": "Share files and text instantly between any devices with military-grade encryption. No registration required.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "categories": ["utilities", "productivity", "social"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-desktop.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "InstantShare desktop view"
+    },
+    {
+      "src": "/screenshot-mobile.jpg", 
+      "sizes": "750x1334",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "InstantShare mobile view"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Start Sharing",
+      "short_name": "Share",
+      "description": "Start a new sharing session",
+      "url": "/?action=host",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Join Session",
+      "short_name": "Join",
+      "description": "Join an existing session",
+      "url": "/?action=join",
+      "icons": [
+        {
+          "src": "/icon-192.png", 
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "protocol_handlers": [
+    {
+      "protocol": "web+instantshare",
+      "url": "/join?sessionId=%s"
+    }
+  ]
+}

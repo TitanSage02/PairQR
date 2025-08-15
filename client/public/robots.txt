@@ -1,0 +1,29 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://instantshare.app/sitemap.xml
+
+# SEO optimizations
+Disallow: /api/
+Disallow: /internal/
+Disallow: /_vite/
+Disallow: /src/
+
+# Security
+Disallow: /.env
+Disallow: /config/
+Disallow: /node_modules/
+
+# Allow search engines to crawl all public content
+Allow: /
+Allow: /join
+Allow: /*.css
+Allow: /*.js
+Allow: /*.svg
+Allow: /*.png
+Allow: /*.jpg
+Allow: /*.webp
+
+# Crawl delay (optional)
+Crawl-delay: 1
