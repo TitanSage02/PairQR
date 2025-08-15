@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { WebRTCManager } from '../lib/webrtc';
+import { generateSecureUUID } from '../lib/uuid';
 import type { ConnectionState, Message } from '../types';
 
 export function useWebRTC() {
@@ -102,7 +103,10 @@ export function useWebRTC() {
         setConnectionState(prev => ({ ...prev, status: 'error' }));
       };
       
-      const publicKey = await manager.initializeClient(sessionId, hostPublicKey);
+      const clientPublicKey = await manager.initializeClient(sessionId, hostPublicKey);
+      
+      // Send client's public key to the host via WebSocket for key exchange
+      manager.sendKeyExchange(clientPublicKey);
       
       setConnectionState(prev => ({
         ...prev,
@@ -110,7 +114,7 @@ export function useWebRTC() {
         session: { id: sessionId } as any
       }));
       
-      return publicKey;
+      return clientPublicKey;
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to join session');
       setConnectionState(prev => ({ ...prev, status: 'error' }));
@@ -142,7 +146,7 @@ export function useWebRTC() {
       
       // Add local message to state
       const localMessage: Message = {
-        id: crypto.randomUUID(),
+        id: generateSecureUUID(),
         content,
         timestamp: Date.now(),
         isLocal: true,

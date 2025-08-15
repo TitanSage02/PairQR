@@ -12,11 +12,18 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  // Prepend backend URL for API calls
+  const backendUrl = import.meta.env.VITE_SIGNALING_URL || 'http://localhost:9000';
+  const fullUrl = url.startsWith('/api') ? `${backendUrl}${url}` : url;
+  
+  const res = await fetch(fullUrl, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
+    mode: "cors"
   });
 
   await throwIfResNotOk(res);
@@ -29,7 +36,12 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
+    // Prepend backend URL for API calls
+    const backendUrl = import.meta.env.VITE_SIGNALING_URL || 'http://localhost:9000';
+    const url = queryKey.join("/");
+    const fullUrl = url.startsWith('/api') ? `${backendUrl}${url}` : url;
+    
+    const res = await fetch(fullUrl, {
       credentials: "include",
     });
 

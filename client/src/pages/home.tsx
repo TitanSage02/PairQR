@@ -8,6 +8,7 @@ import { ChatInterface } from '../components/chat-interface';
 import { LoadingOverlay } from '../components/loading-overlay';
 import { useWebRTC } from '../hooks/use-webrtc';
 import { apiRequest } from '../lib/queryClient';
+import { generateSecureUUID } from '../lib/uuid';
 
 type AppView = 'welcome' | 'hosting' | 'scanning' | 'chat' | 'error';
 
@@ -60,7 +61,7 @@ export default function Home() {
       setLoadingMessage('Generating secure keys and session');
 
       // Generate host keys and get public key
-      const sessionId = crypto.randomUUID();
+      const sessionId = generateSecureUUID();
       const publicKey = await initializeHost(sessionId);
 
       // Create session on server

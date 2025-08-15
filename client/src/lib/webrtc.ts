@@ -1,4 +1,5 @@
 import { CryptoManager } from './crypto';
+import { generateSecureUUID } from './uuid';
 import type { Message } from '../types';
 
 export class WebRTCManager {
@@ -18,7 +19,7 @@ export class WebRTCManager {
 
   constructor() {
     this.crypto = new CryptoManager();
-    this.clientId = crypto.randomUUID();
+    this.clientId = generateSecureUUID();
   }
 
   async initializeHost(sessionId: string): Promise<string> {
@@ -84,8 +85,9 @@ export class WebRTCManager {
 
   private async connectWebSocket(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      // Use backend URL from environment variables
+      const backendUrl = import.meta.env.VITE_SIGNALING_URL || 'http://localhost:9000';
+      const wsUrl = backendUrl.replace('http', 'ws') + '/ws';
       
       this.websocket = new WebSocket(wsUrl);
       
@@ -147,6 +149,20 @@ export class WebRTCManager {
             type: 'webrtc-offer',
             offer: offer
           }));
+        }
+        break;
+        
+      case 'key-exchange':
+        // Handle key exchange for the host
+        if (message.clientPublicKey && !this.crypto.isReady()) {
+          try {
+            const clientKey = await this.crypto.importPublicKey(message.clientPublicKey);
+            await this.crypto.deriveSharedSecret(clientKey);
+            console.log('Host: Key exchange completed');
+          } catch (error) {
+            console.error('Host: Key exchange failed:', error);
+            this.onError?.(error as Error);
+          }
         }
         break;
         
@@ -220,7 +236,7 @@ export class WebRTCManager {
     const { ciphertext, nonce } = await this.crypto.encrypt(content);
     
     const message = {
-      id: crypto.randomUUID(),
+      id: generateSecureUUID(),
       ciphertext,
       nonce,
       timestamp: Date.now(),
@@ -234,6 +250,13 @@ export class WebRTCManager {
     this.websocket?.send(JSON.stringify({
       type: 'typing',
       isTyping
+    }));
+  }
+
+  sendKeyExchange(clientPublicKey: string): void {
+    this.websocket?.send(JSON.stringify({
+      type: 'key-exchange',
+      clientPublicKey
     }));
   }
 

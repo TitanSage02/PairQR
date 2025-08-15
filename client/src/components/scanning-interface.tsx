@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ interface ScanningInterfaceProps {
 
 export function ScanningInterface({ onQRScanned }: ScanningInterfaceProps) {
   const [manualSessionId, setManualSessionId] = useState('');
+  const processedQRRef = useRef<string | null>(null);
   const { 
     videoRef, 
     isInitialized, 
@@ -22,8 +23,22 @@ export function ScanningInterface({ onQRScanned }: ScanningInterfaceProps) {
     startCamera 
   } = useQRScanner();
 
+  // Auto-start camera when component mounts
+  useEffect(() => {
+    const initCamera = async () => {
+      try {
+        await startCamera();
+      } catch (error) {
+        console.error('Failed to initialize camera:', error);
+      }
+    };
+    
+    initCamera();
+  }, [startCamera]);
+
   const handleStartScanning = async () => {
     try {
+      processedQRRef.current = null; // Reset processed QR
       await startScanning();
     } catch (error) {
       console.error('Failed to start scanning:', error);
@@ -38,10 +53,13 @@ export function ScanningInterface({ onQRScanned }: ScanningInterfaceProps) {
     }
   };
 
-  // Handle QR data when scanned
-  if (qrData && !isScanning) {
-    onQRScanned(qrData.sessionId, qrData.hostPublicKey);
-  }
+  // Handle QR data when scanned - ensure we only process once
+  useEffect(() => {
+    if (qrData && !isScanning && processedQRRef.current !== qrData.sessionId) {
+      processedQRRef.current = qrData.sessionId;
+      onQRScanned(qrData.sessionId, qrData.hostPublicKey);
+    }
+  }, [qrData, isScanning, onQRScanned]);
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -124,6 +142,13 @@ export function ScanningInterface({ onQRScanned }: ScanningInterfaceProps) {
                   Start Scanning
                 </Button>
               )}
+            </div>
+          )}
+
+          {/* Auto-start scanning hint */}
+          {isInitialized && !isScanning && (
+            <div className="text-center mb-6">
+              <p className="text-sm text-muted">Camera ready! Click "Start Scanning" to begin</p>
             </div>
           )}
 

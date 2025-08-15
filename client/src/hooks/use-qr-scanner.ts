@@ -68,9 +68,11 @@ export function useQRScanner() {
       setError(null);
       setQrData(null);
       
-      if (!isInitialized) {
-        await startCamera();
-      }
+      // Always start camera first
+      await startCamera();
+      
+      // Wait a bit for camera to initialize
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       setIsScanning(true);
       
@@ -79,7 +81,7 @@ export function useQRScanner() {
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to start scanning');
     }
-  }, [isInitialized, startCamera, scanFrame]);
+  }, [startCamera, scanFrame]);
 
   const stopScanning = useCallback(() => {
     setIsScanning(false);
