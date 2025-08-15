@@ -5,7 +5,6 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY tsconfig.json drizzle.config.ts ./
 COPY shared ./shared
-COPY client ./client
 COPY server ./server
 COPY scripts ./scripts
 
@@ -14,8 +13,8 @@ RUN npm cache clean --force
 RUN rm -rf node_modules package-lock.json
 RUN npm install --legacy-peer-deps
 
-# Build client and server
-RUN npm run build
+# Build server
+RUN npm run build:server
 
 # Reduce to production deps
 # Keep dev deps for drizzle-kit migrations at container start
