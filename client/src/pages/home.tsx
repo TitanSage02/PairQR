@@ -1,24 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { AppHeader } from '../components/app-header';
-import { WelcomeHero } from '../components/welcome-hero';
+import { LandingPage } from '../components/landing-page';
 import { HostingInterface } from '../components/hosting-interface';
 import { ScanningInterface } from '../components/scanning-interface';
 import { ChatInterface } from '../components/chat-interface';
 import { LoadingOverlay } from '../components/loading-overlay';
+import { FeedbackWidget } from '../components/feedback-widget';
 import { useWebRTC } from '../hooks/use-webrtc';
 import { apiRequest } from '../lib/queryClient';
 import { generateSecureUUID } from '../lib/uuid';
+import { trackEvent } from '../lib/analytics';
 
-type AppView = 'welcome' | 'hosting' | 'scanning' | 'chat' | 'error';
+type AppView = 'landing' | 'hosting' | 'scanning' | 'chat' | 'error';
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<AppView>('welcome');
+  const [currentView, setCurrentView] = useState<AppView>('landing');
   const [qrUrl, setQrUrl] = useState('');
   const [expirationTime, setExpirationTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingTitle, setLoadingTitle] = useState('');
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [sessionStartTime, setSessionStartTime] = useState(0);
   const { toast } = useToast();
 
   const {
@@ -34,11 +38,19 @@ export default function Home() {
     clearMessages
   } = useWebRTC();
 
+  // Track page view on mount
+  useEffect(() => {
+    trackEvent.sessionStarted();
+    trackEvent.pageView(window.location.pathname);
+  }, []);
+
   // Handle connection state changes
   useEffect(() => {
     if (connectionState.status === 'connected') {
       setCurrentView('chat');
       setIsLoading(false);
+      const connectionDuration = Date.now() - sessionStartTime;
+      trackEvent.connectionEstablished(connectionDuration);
       toast({
         title: "Connected!",
         description: "Secure P2P connection established",
@@ -46,19 +58,21 @@ export default function Home() {
     } else if (connectionState.status === 'error') {
       setCurrentView('error');
       setIsLoading(false);
+      trackEvent.errorOccurred('connection_failed');
       toast({
         title: "Connection Error",
         description: error || "Failed to establish connection",
         variant: "destructive",
       });
     }
-  }, [connectionState.status, error, toast]);
+  }, [connectionState.status, error, toast, sessionStartTime]);
 
   const handleStartHosting = async () => {
     try {
       setIsLoading(true);
       setLoadingTitle('Creating Session...');
       setLoadingMessage('Generating secure keys and session');
+      setSessionStartTime(Date.now());
 
       // Generate host keys and get public key
       const sessionId = generateSecureUUID();
@@ -78,6 +92,8 @@ export default function Home() {
       setCurrentView('hosting');
       setIsLoading(false);
 
+      trackEvent.sessionCreated('host');
+
       toast({
         title: "Session Created",
         description: "Share the QR code to connect devices",
@@ -85,6 +101,7 @@ export default function Home() {
     } catch (error) {
       console.error('Failed to start hosting:', error);
       setIsLoading(false);
+      trackEvent.errorOccurred('session_creation_failed');
       toast({
         title: "Failed to Create Session",
         description: error instanceof Error ? error.message : "Unknown error occurred",
@@ -95,6 +112,8 @@ export default function Home() {
 
   const handleStartScanning = () => {
     setCurrentView('scanning');
+    setSessionStartTime(Date.now());
+    trackEvent.sessionCreated('join');
   };
 
   const handleQRScanned = async (sessionId: string, hostPublicKey: string) => {
@@ -141,7 +160,9 @@ export default function Home() {
   const handleSendMessage = async (message: string) => {
     try {
       await sendMessage(message);
+      trackEvent.messagesSent(1);
     } catch (error) {
+      trackEvent.errorOccurred('message_send_failed');
       toast({
         title: "Failed to Send Message",
         description: error instanceof Error ? error.message : "Message sending failed",
@@ -164,11 +185,13 @@ export default function Home() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `qrnote-chat-${Date.now()}.json`;
+    a.download = `instantshare-chat-${Date.now()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    
+    trackEvent.featureUsed('export_chat');
     
     toast({
       title: "Chat Exported",
@@ -184,10 +207,19 @@ export default function Home() {
   };
 
   const handleEndSession = () => {
+    // Track session end
+    const sessionDuration = Date.now() - sessionStartTime;
+    trackEvent.sessionEnded(sessionDuration, messages.length);
+    
     disconnect();
-    setCurrentView('welcome');
+    setCurrentView('landing');
     setQrUrl('');
     setExpirationTime(0);
+    
+    // Show feedback widget after session
+    setTimeout(() => {
+      setShowFeedback(true);
+    }, 500);
     
     toast({
       title: "Session Ended",
@@ -196,17 +228,17 @@ export default function Home() {
   };
 
   const handleGoHome = () => {
-    setCurrentView('welcome');
+    setCurrentView('landing');
     disconnect();
   };
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 antialiased">
-      <AppHeader connectionStatus={connectionState.status} />
+      {currentView !== 'landing' && <AppHeader connectionStatus={connectionState.status} />}
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {currentView === 'welcome' && (
-          <WelcomeHero 
+      <main className={currentView === 'landing' ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'}>
+        {currentView === 'landing' && (
+          <LandingPage 
             onStartHosting={handleStartHosting}
             onStartScanning={handleStartScanning}
           />
@@ -288,6 +320,17 @@ export default function Home() {
         title={loadingTitle}
         message={loadingMessage}
       />
+
+      {showFeedback && (
+        <FeedbackWidget
+          onClose={() => setShowFeedback(false)}
+          sessionInfo={{
+            duration: sessionStartTime > 0 ? Date.now() - sessionStartTime : 0,
+            messageCount: messages.length,
+            connectionQuality: "Excellent" // You could make this dynamic
+          }}
+        />
+      )}
     </div>
   );
 }
