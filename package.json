@@ -1,18 +1,25 @@
 {
-  "name": "instantshare",
+  "name": "pairqr",
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
-  "description": "Instant secure file and text sharing with end-to-end encryption",
-  "keywords": ["file-sharing", "p2p", "webrtc", "secure", "instant"],
-  "homepage": "https://instantshare.app",
+  "description": "Instant secure file and text sharing with QR code pairing",
+  "keywords": [
+    "file-sharing",
+    "qr-code",
+    "webrtc",
+    "secure",
+    "instant",
+    "pairing"
+  ],
+  "homepage": "https://pairqr.vercel.app",
   "repository": {
     "type": "git",
-    "url": "https://github.com/TitanSage02/InstantShare.git"
+    "url": "https://github.com/TitanSage02/PairQR.git"
   },
   "scripts": {
     "dev": "tsx server/index.ts",
-    "build:client": "cd client && vite build",
+    "build:client": "cd client && npm ci && npm run build",
     "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "build": "npm run build:client && npm run build:server",
     "start": "NODE_ENV=production node dist/index.js",
@@ -25,8 +32,6 @@
     "analyze": "cd client && npx vite build --mode analyze"
   },
   "dependencies": {
-  "cors": "^2.8.5",
-  "helmet": "^7.1.0",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@neondatabase/serverless": "^0.10.4",
@@ -58,11 +63,17 @@
     "@radix-ui/react-toggle-group": "^1.1.3",
     "@radix-ui/react-tooltip": "^1.2.0",
     "@tanstack/react-query": "^5.60.5",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.9",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/qrcode": "^1.5.5",
+    "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "connect-pg-simple": "^10.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
     "date-fns": "^3.6.0",
     "drizzle-orm": "^0.39.1",
     "drizzle-zod": "^0.7.0",
@@ -70,7 +81,9 @@
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "framer-motion": "^11.13.1",
+    "helmet": "^7.1.0",
     "input-otp": "^1.4.2",
+    "jsonwebtoken": "^9.0.2",
     "jsqr": "^1.4.0",
     "lucide-react": "^0.453.0",
     "memorystore": "^1.6.7",

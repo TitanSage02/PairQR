@@ -1,10 +1,23 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import cookieParser from "cookie-parser";
 import { storage } from "./storage";
 import { insertSessionSchema, sessionJoinSchema } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { createHmac, timingSafeEqual } from "crypto";
+import { 
+  initializeAdmin, 
+  requireAdmin, 
+  verifyAdminLogin, 
+  generateAdminToken,
+  getAdminSettings,
+  updateAdminSettings,
+  getAdminStats,
+  incrementStat,
+  changeAdminPassword,
+  getAdminData
+} from "./admin";
 
 // Extend WebSocket to include custom properties
 interface ExtendedWebSocket extends WebSocket {
@@ -32,6 +45,12 @@ function verifySignature(data: string, signature: string): boolean {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize admin system
+  await initializeAdmin();
+  
+  // Add cookie parser middleware
+  app.use(cookieParser());
+  
   const httpServer = createServer(app);
   
   // WebSocket server for real-time signaling
@@ -249,6 +268,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid events data' });
       }
 
+      // Update admin stats
+      events.forEach(event => {
+        switch (event.event) {
+          case 'session_started':
+            incrementStat('totalSessions');
+            break;
+          case 'messages_sent':
+            incrementStat('totalMessages', event.properties?.count || 1);
+            break;
+        }
+      });
+
       // Rate limiting check (simple in-memory, consider Redis for production)
       const clientIP = req.ip || req.connection.remoteAddress;
       const now = Date.now();
@@ -297,6 +328,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Feedback too long' });
       }
 
+      // Update admin stats
+      incrementStat('totalFeedback');
+
       const feedbackData = {
         id: randomUUID(),
         rating,
@@ -340,6 +374,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Email address too long' });
       }
 
+      // Update admin stats
+      incrementStat('waitlistSignups');
+
       const waitlistEntry = {
         id: randomUUID(),
         email: email.trim().toLowerCase(),
@@ -359,6 +396,218 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Waitlist error:', error);
       res.status(500).json({ error: 'Waitlist signup failed' });
+    }
+  });
+
+  // ========================================
+  // ADMIN ROUTES - Protected by authentication
+  // ========================================
+
+  // Admin login
+  app.post('/api/admin/login', async (req, res) => {
+    try {
+      const { password } = req.body;
+      
+      if (!password || typeof password !== 'string') {
+        return res.status(400).json({ error: 'Password required' });
+      }
+
+      const isValid = await verifyAdminLogin(password);
+      if (!isValid) {
+        // Log failed attempt
+        console.warn(`❌ Failed admin login attempt from ${req.ip}`);
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      const token = generateAdminToken();
+      
+      // Set secure HTTP-only cookie
+      res.cookie('adminToken', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      });
+
+      console.log(`✅ Admin login successful from ${req.ip}`);
+      
+      res.json({ 
+        success: true, 
+        token,
+        expiresIn: 24 * 60 * 60 * 1000
+      });
+    } catch (error) {
+      console.error('Admin login error:', error);
+      res.status(500).json({ error: 'Login failed' });
+    }
+  });
+
+  // Admin logout
+  app.post('/api/admin/logout', requireAdmin, (req, res) => {
+    // Clear the JWT cookie
+    res.clearCookie('admin_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
+    });
+    
+    res.json({ message: 'Logged out successfully' });
+  });
+
+  // Admin export
+  app.get('/api/admin/export', requireAdmin, (req, res) => {
+    try {
+      const exportData = {
+        timestamp: new Date().toISOString(),
+        stats: storage.getAdminStats(),
+        sessions: storage.getAllSessions(),
+        feedback: storage.getFeedback(),
+        waitlist: storage.getWaitlist(),
+        version: '1.0.0'
+      };
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="pairqr-export-${new Date().toISOString().split('T')[0]}.json"`);
+      
+      res.json(exportData);
+    } catch (error) {
+      console.error('Export error:', error);
+      res.status(500).json({ error: 'Export failed' });
+    }
+  });
+
+  // Get admin dashboard data
+  app.get('/api/admin/dashboard', requireAdmin, (req, res) => {
+    try {
+      const stats = getAdminStats();
+      const settings = getAdminSettings();
+      
+      const dashboardData = {
+        stats: {
+          ...stats,
+          activeConnections: connectedClients.size
+        },
+        settings,
+        systemInfo: {
+          uptime: process.uptime(),
+          memory: process.memoryUsage(),
+          platform: process.platform,
+          nodeVersion: process.version,
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+      res.json(dashboardData);
+    } catch (error) {
+      console.error('Dashboard error:', error);
+      res.status(500).json({ error: 'Failed to load dashboard' });
+    }
+  });
+
+  // Get admin settings
+  app.get('/api/admin/settings', requireAdmin, (req, res) => {
+    try {
+      const settings = getAdminSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error('Settings error:', error);
+      res.status(500).json({ error: 'Failed to load settings' });
+    }
+  });
+
+  // Update admin settings
+  app.put('/api/admin/settings', requireAdmin, (req, res) => {
+    try {
+      const updates = req.body;
+      
+      // Validate updates
+      const allowedKeys = [
+        'siteName', 'maxSessionDuration', 'enableAnalytics', 
+        'enableFeedback', 'maintenanceMode', 'allowedFileTypes', 'maxFileSize'
+      ];
+      
+      const validUpdates: any = {};
+      for (const key of allowedKeys) {
+        if (key in updates) {
+          validUpdates[key] = updates[key];
+        }
+      }
+      
+      const updatedSettings = updateAdminSettings(validUpdates);
+      
+      console.log(`✅ Admin settings updated by ${req.ip}:`, validUpdates);
+      
+      res.json({ success: true, settings: updatedSettings });
+    } catch (error) {
+      console.error('Settings update error:', error);
+      res.status(500).json({ error: 'Failed to update settings' });
+    }
+  });
+
+  // Change admin password
+  app.put('/api/admin/password', requireAdmin, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Current and new passwords required' });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'New password must be at least 6 characters' });
+      }
+
+      const success = await changeAdminPassword(currentPassword, newPassword);
+      if (!success) {
+        return res.status(401).json({ error: 'Current password incorrect' });
+      }
+
+      console.log(`✅ Admin password changed by ${req.ip}`);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Password change error:', error);
+      res.status(500).json({ error: 'Failed to change password' });
+    }
+  });
+
+  // Get admin logs (simplified - in production use proper logging)
+  app.get('/api/admin/logs', requireAdmin, (req, res) => {
+    try {
+      // This is a simplified version - in production you'd read from log files
+      const logs = [
+        {
+          timestamp: new Date().toISOString(),
+          level: 'info',
+          message: 'Admin dashboard accessed',
+          ip: req.ip
+        }
+      ];
+      
+      res.json({ logs });
+    } catch (error) {
+      console.error('Logs error:', error);
+      res.status(500).json({ error: 'Failed to load logs' });
+    }
+  });
+
+  // Export admin data
+  app.get('/api/admin/export', requireAdmin, (req, res) => {
+    try {
+      const exportData = {
+        ...getAdminData(),
+        exportedAt: new Date().toISOString(),
+        exportedBy: req.ip
+      };
+      
+      res.setHeader('Content-Disposition', 'attachment; filename="instantshare-admin-export.json"');
+      res.setHeader('Content-Type', 'application/json');
+      res.json(exportData);
+      
+      console.log(`✅ Admin data exported by ${req.ip}`);
+    } catch (error) {
+      console.error('Export error:', error);
+      res.status(500).json({ error: 'Failed to export data' });
     }
   });
 

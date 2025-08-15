@@ -29,6 +29,27 @@ export class MemStorage implements IStorage {
   private peerOffers: Map<string, any>;
   private peerAnswers: Map<string, any>;
   private iceCandidates: Map<string, any[]>;
+  
+  // Admin and analytics data
+  private feedback: Array<{
+    id: string;
+    rating: number;
+    comment?: string;
+    timestamp: string;
+    sessionId?: string;
+  }>;
+  
+  private waitlist: string[];
+  
+  private analytics: {
+    totalMessages: number;
+    events: Array<{
+      type: string;
+      timestamp: string;
+      sessionId?: string;
+      data?: any;
+    }>;
+  };
 
   constructor() {
     this.users = new Map();
@@ -36,6 +57,12 @@ export class MemStorage implements IStorage {
     this.peerOffers = new Map();
     this.peerAnswers = new Map();
     this.iceCandidates = new Map();
+    this.feedback = [];
+    this.waitlist = [];
+    this.analytics = {
+      totalMessages: 0,
+      events: []
+    };
     
     // Cleanup expired sessions every minute
     setInterval(() => {
@@ -64,6 +91,7 @@ export class MemStorage implements IStorage {
     const newSession: Session = {
       ...session,
       createdAt: new Date(),
+      isActive: session.isActive || "true"
     };
     this.sessions.set(session.id, newSession);
     return newSession;
@@ -97,11 +125,17 @@ export class MemStorage implements IStorage {
 
   async cleanupExpiredSessions(): Promise<void> {
     const now = new Date();
-    for (const [id, session] of this.sessions.entries()) {
+    const sessionsToDelete: string[] = [];
+    
+    this.sessions.forEach((session, id) => {
       if (session.expiresAt <= now) {
-        this.sessions.delete(id);
-        this.clearPeerData(id);
+        sessionsToDelete.push(id);
       }
+    });
+    
+    for (const id of sessionsToDelete) {
+      this.sessions.delete(id);
+      this.clearPeerData(id);
     }
   }
 
@@ -136,6 +170,68 @@ export class MemStorage implements IStorage {
     this.peerOffers.delete(sessionId);
     this.peerAnswers.delete(sessionId);
     this.iceCandidates.delete(sessionId);
+  }
+
+  // Admin methods
+  getAdminStats() {
+    return {
+      totalSessions: this.sessions.size,
+      activeConnections: Array.from(this.sessions.values()).filter(s => s.isActive).length,
+      totalMessages: this.analytics.totalMessages || 0,
+      totalFeedback: this.feedback.length,
+      waitlistSignups: this.waitlist.length,
+      totalAnalyticsEvents: this.analytics.events.length
+    };
+  }
+
+  getAllSessions() {
+    return Array.from(this.sessions.values()).map(session => ({
+      id: session.id,
+      createdAt: session.createdAt,
+      isActive: session.isActive,
+      expiresAt: session.expiresAt
+    }));
+  }
+
+  getFeedback() {
+    return this.feedback;
+  }
+
+  getWaitlist() {
+    return this.waitlist;
+  }
+
+  getAnalytics() {
+    return this.analytics;
+  }
+
+  addFeedback(rating: number, comment?: string, sessionId?: string) {
+    this.feedback.push({
+      id: randomUUID(),
+      rating,
+      comment,
+      timestamp: new Date().toISOString(),
+      sessionId
+    });
+  }
+
+  addWaitlistEmail(email: string) {
+    if (!this.waitlist.includes(email)) {
+      this.waitlist.push(email);
+    }
+  }
+
+  incrementMessageCount() {
+    this.analytics.totalMessages++;
+  }
+
+  addAnalyticsEvent(type: string, sessionId?: string, data?: any) {
+    this.analytics.events.push({
+      type,
+      timestamp: new Date().toISOString(),
+      sessionId,
+      data
+    });
   }
 }
 
