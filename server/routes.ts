@@ -239,5 +239,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Analytics endpoint (privacy-first)
+  app.post('/api/analytics', async (req, res) => {
+    try {
+      const { events, userAgent, viewport, timezone, language } = req.body;
+      
+      // Basic validation
+      if (!Array.isArray(events) || events.length === 0) {
+        return res.status(400).json({ error: 'Invalid events data' });
+      }
+
+      // Rate limiting check (simple in-memory, consider Redis for production)
+      const clientIP = req.ip || req.connection.remoteAddress;
+      const now = Date.now();
+      
+      // Log analytics data (in production, send to analytics service)
+      const analyticsData = {
+        timestamp: now,
+        clientIP: clientIP ? clientIP.split(':').pop() : 'unknown', // Only keep last part for privacy
+        userAgent: userAgent?.substring(0, 100), // Truncate for privacy
+        viewport: viewport && typeof viewport.width === 'number' ? viewport : null,
+        timezone: typeof timezone === 'string' ? timezone : null,
+        language: typeof language === 'string' ? language : null,
+        events: events.map(event => ({
+          event: typeof event.event === 'string' ? event.event.substring(0, 50) : 'unknown',
+          properties: event.properties && typeof event.properties === 'object' ? event.properties : {},
+          timestamp: typeof event.timestamp === 'number' ? event.timestamp : now,
+          sessionId: typeof event.sessionId === 'string' ? event.sessionId.substring(0, 32) : null
+        }))
+      };
+
+      // In production, you'd send this to your analytics service
+      console.log('Analytics data received:', JSON.stringify(analyticsData, null, 2));
+      
+      res.json({ success: true, received: events.length });
+    } catch (error) {
+      console.error('Analytics error:', error);
+      res.status(500).json({ error: 'Analytics processing failed' });
+    }
+  });
+
+  // Feedback endpoint
+  app.post('/api/feedback', async (req, res) => {
+    try {
+      const { rating, feedback, category, sessionInfo, timestamp } = req.body;
+      
+      // Validation
+      if (typeof rating !== 'number' || rating < 1 || rating > 5) {
+        return res.status(400).json({ error: 'Invalid rating' });
+      }
+
+      if (feedback && typeof feedback !== 'string') {
+        return res.status(400).json({ error: 'Invalid feedback format' });
+      }
+
+      if (feedback && feedback.length > 1000) {
+        return res.status(400).json({ error: 'Feedback too long' });
+      }
+
+      const feedbackData = {
+        id: randomUUID(),
+        rating,
+        feedback: feedback?.trim() || '',
+        category: typeof category === 'string' ? category : 'other',
+        sessionInfo: sessionInfo && typeof sessionInfo === 'object' ? {
+          duration: typeof sessionInfo.duration === 'number' ? Math.min(sessionInfo.duration, 86400000) : 0, // Max 24h
+          messageCount: typeof sessionInfo.messageCount === 'number' ? Math.min(sessionInfo.messageCount, 1000) : 0, // Max 1000
+          connectionQuality: typeof sessionInfo.connectionQuality === 'string' ? sessionInfo.connectionQuality : 'unknown'
+        } : null,
+        timestamp: timestamp || new Date().toISOString(),
+        clientIP: (req.ip || req.connection.remoteAddress || '').split(':').pop(), // Privacy-safe IP
+        userAgent: req.get('User-Agent')?.substring(0, 100) || 'unknown'
+      };
+
+      // In production, save to database or send to feedback service
+      console.log('Feedback received:', JSON.stringify(feedbackData, null, 2));
+      
+      // You could store in a simple file or database
+      // await storage.saveFeedback(feedbackData);
+      
+      res.json({ success: true, id: feedbackData.id });
+    } catch (error) {
+      console.error('Feedback error:', error);
+      res.status(500).json({ error: 'Feedback processing failed' });
+    }
+  });
+
+  // Waitlist endpoint for premium features
+  app.post('/api/waitlist', async (req, res) => {
+    try {
+      const { email, source } = req.body;
+      
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || typeof email !== 'string' || !emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Invalid email address' });
+      }
+
+      if (email.length > 254) { // RFC maximum email length
+        return res.status(400).json({ error: 'Email address too long' });
+      }
+
+      const waitlistEntry = {
+        id: randomUUID(),
+        email: email.trim().toLowerCase(),
+        source: typeof source === 'string' ? source : 'unknown',
+        timestamp: new Date().toISOString(),
+        clientIP: (req.ip || req.connection.remoteAddress || '').split(':').pop(),
+        userAgent: req.get('User-Agent')?.substring(0, 100) || 'unknown'
+      };
+
+      // In production, save to database
+      console.log('Waitlist signup:', JSON.stringify(waitlistEntry, null, 2));
+      
+      // You could store in database or send to email service
+      // await storage.saveWaitlistEntry(waitlistEntry);
+      
+      res.json({ success: true, id: waitlistEntry.id });
+    } catch (error) {
+      console.error('Waitlist error:', error);
+      res.status(500).json({ error: 'Waitlist signup failed' });
+    }
+  });
+
   return httpServer;
 }
