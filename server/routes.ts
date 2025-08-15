@@ -69,7 +69,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           case 'webrtc-offer':
           case 'webrtc-answer':
           case 'ice-candidate':
-            // Forward WebRTC signaling to other peer in session
+          case 'key-exchange':
+            // Forward WebRTC signaling and key exchange to other peer in session
             connectedClients.forEach((client, id) => {
               if (client !== ws && client.sessionId === ws.sessionId && client.readyState === WebSocket.OPEN) {
                 client.send(data.toString());
