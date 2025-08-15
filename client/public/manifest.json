@@ -1,7 +1,7 @@
 {
-  "name": "InstantShare - Instant Secure File Sharing",
-  "short_name": "InstantShare",
-  "description": "Share files and text instantly between any devices with military-grade encryption. No registration required.",
+  "name": "PairQR - Instant Secure File Sharing with QR Code Pairing",
+  "short_name": "PairQR",
+  "description": "Share files and text instantly between any devices using QR code pairing with military-grade encryption. No registration required.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

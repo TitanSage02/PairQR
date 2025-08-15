@@ -48,7 +48,7 @@ export function AppHeader({ connectionStatus }: AppHeaderProps) {
                   <Zap className="text-white w-4 h-4" />
                 </div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  InstantShare
+                  PairQR
                 </h1>
               </div>
               

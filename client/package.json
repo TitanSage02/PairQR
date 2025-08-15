@@ -1,9 +1,9 @@
 {
-  "name": "instantshare-client",
+  "name": "pairqr-client",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "InstantShare client application - Instant secure file and text sharing",
+  "description": "PairQR client application - Instant secure file and text sharing with QR code pairing",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",

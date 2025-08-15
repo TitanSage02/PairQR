@@ -11,10 +11,10 @@ export function WelcomeHero({ onStartHosting, onStartScanning }: WelcomeHeroProp
     <div className="text-center mb-12">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-          Secure P2P Text Sharing
+          Secure P2P Sharing with QR Pairing
         </h1>
         <p className="text-xl text-muted mb-8 leading-relaxed">
-          Share text instantly between devices with end-to-end encryption. 
+          Share files and text instantly between devices using QR code pairing with end-to-end encryption. 
           No data stored on servers, direct peer-to-peer connection via WebRTC.
         </p>
         
