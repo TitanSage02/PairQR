@@ -1,13 +1,15 @@
 services:
-  backend:
+  instantshare:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: qrninja-backend
+    container_name: instantshare-app
     restart: unless-stopped
     environment:
-      - PORT=9000
-      - NODE_ENV=development
+      - PORT=3000
+      - NODE_ENV=production
+      - HMAC_SECRET=${HMAC_SECRET:-change-me-in-production}
+      - SESSION_TTL_MINUTES=${SESSION_TTL_MINUTES:-2}
       - JWT_SECRET=dev-secret-key
       - HMAC_SECRET=dev-hmac-key
       - CORS_ORIGIN=http://localhost:5173

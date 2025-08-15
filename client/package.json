@@ -1,8 +1,9 @@
 {
-  "name": "qrninja-client",
+  "name": "instantshare-client",
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "description": "InstantShare client application - Instant secure file and text sharing",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",

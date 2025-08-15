@@ -3,28 +3,86 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>QRNote - Secure P2P Text Sharing</title>
-    <meta name="description" content="Share text instantly between devices with end-to-end encryption. No data stored on servers, direct peer-to-peer connection via WebRTC." />
+    <title>InstantShare - Instant Secure File & Text Sharing</title>
+    <meta name="description" content="Share files and text instantly between any devices with military-grade encryption. No registration required, completely free. Direct peer-to-peer sharing via WebRTC." />
+    <meta name="keywords" content="file sharing, instant share, secure sharing, P2P, WebRTC, no registration, free file transfer, encrypted sharing" />
+    <meta name="author" content="InstantShare" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://instantshare.app/" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://qrnote.dev/" />
-    <meta property="og:title" content="QRNote - Secure P2P Text Sharing" />
-    <meta property="og:description" content="Share text instantly between devices with end-to-end encryption. No data stored on servers, direct peer-to-peer connection via WebRTC." />
+    <meta property="og:url" content="https://instantshare.app/" />
+    <meta property="og:title" content="InstantShare - Instant Secure File & Text Sharing" />
+    <meta property="og:description" content="Share files and text instantly between any devices with military-grade encryption. No registration required, completely free." />
+    <meta property="og:image" content="https://instantshare.app/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="InstantShare" />
+    <meta property="og:locale" content="en_US" />
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://qrnote.dev/" />
-    <meta property="twitter:title" content="QRNote - Secure P2P Text Sharing" />
-    <meta property="twitter:description" content="Share text instantly between devices with end-to-end encryption. No data stored on servers, direct peer-to-peer connection via WebRTC." />
+    <meta property="twitter:url" content="https://instantshare.app/" />
+    <meta property="twitter:title" content="InstantShare - Instant Secure File & Text Sharing" />
+    <meta property="twitter:description" content="Share files and text instantly between any devices with military-grade encryption. No registration required, completely free." />
+    <meta property="twitter:image" content="https://instantshare.app/og-image.jpg" />
+    <meta property="twitter:creator" content="@InstantShareApp" />
+    
+    <!-- Schema.org markup for Google+ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "InstantShare",
+      "description": "Share files and text instantly between any devices with military-grade encryption",
+      "url": "https://instantshare.app",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "creator": {
+        "@type": "Organization",
+        "name": "InstantShare"
+      },
+      "featureList": [
+        "End-to-end encryption",
+        "No registration required", 
+        "Direct P2P sharing",
+        "Cross-platform compatibility",
+        "Real-time file transfer"
+      ]
+    }
+    </script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Security Headers -->
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="InstantShare" />
+    
+    <!-- Performance and Security Headers -->
     <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(), geolocation=(), payment=()">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
   </head>
   <body>
     <div id="root"></div>
