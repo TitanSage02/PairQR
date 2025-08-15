@@ -1,0 +1,242 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
+import { storage } from "./storage";
+import { insertSessionSchema, sessionJoinSchema } from "@shared/schema";
+import { randomUUID } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
+
+// Extend WebSocket to include custom properties
+interface ExtendedWebSocket extends WebSocket {
+  sessionId?: string;
+  clientId?: string;
+}
+
+const HMAC_SECRET = process.env.HMAC_SECRET || "change-me-in-production";
+const SESSION_TTL_MINUTES = parseInt(process.env.SESSION_TTL_MINUTES || "2");
+
+function createSignature(data: string): string {
+  return createHmac('sha256', HMAC_SECRET).update(data).digest('base64url');
+}
+
+function verifySignature(data: string, signature: string): boolean {
+  const expectedSignature = createSignature(data);
+  const expectedBuffer = Buffer.from(expectedSignature);
+  const providedBuffer = Buffer.from(signature);
+  
+  if (expectedBuffer.length !== providedBuffer.length) {
+    return false;
+  }
+  
+  return timingSafeEqual(expectedBuffer, providedBuffer);
+}
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  const httpServer = createServer(app);
+  
+  // WebSocket server for real-time signaling
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  const connectedClients = new Map<string, ExtendedWebSocket>();
+  
+  wss.on('connection', (ws: ExtendedWebSocket, req) => {
+    console.log('WebSocket connection established');
+    
+    ws.on('message', async (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+        
+        switch (message.type) {
+          case 'join-session':
+            const { sessionId, clientId } = message;
+            connectedClients.set(clientId, ws);
+            
+            // Store client reference for session
+            ws.sessionId = sessionId;
+            ws.clientId = clientId;
+            
+            // Notify other clients in the session
+            connectedClients.forEach((client, id) => {
+              if (client !== ws && client.sessionId === sessionId && client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                  type: 'peer-joined',
+                  clientId: clientId
+                }));
+              }
+            });
+            break;
+            
+          case 'webrtc-offer':
+          case 'webrtc-answer':
+          case 'ice-candidate':
+            // Forward WebRTC signaling to other peer in session
+            connectedClients.forEach((client, id) => {
+              if (client !== ws && client.sessionId === ws.sessionId && client.readyState === WebSocket.OPEN) {
+                client.send(data.toString());
+              }
+            });
+            break;
+            
+          case 'typing':
+            // Forward typing indicators
+            connectedClients.forEach((client, id) => {
+              if (client !== ws && client.sessionId === ws.sessionId && client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                  type: 'typing',
+                  isTyping: message.isTyping
+                }));
+              }
+            });
+            break;
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+      }
+    });
+    
+    ws.on('close', () => {
+      if (ws.clientId) {
+        connectedClients.delete(ws.clientId);
+        
+        // Notify other clients that peer left
+        connectedClients.forEach((client, id) => {
+          if (client.sessionId === ws.sessionId && client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              type: 'peer-left',
+              clientId: ws.clientId
+            }));
+          }
+        });
+      }
+    });
+  });
+
+  // API Routes
+  
+  // Create a new session (host)
+  app.post('/api/sessions', async (req, res) => {
+    try {
+      // Set expiration time first
+      const expiresAt = new Date();
+      expiresAt.setMinutes(expiresAt.getMinutes() + SESSION_TTL_MINUTES);
+      
+      // Prepare session data with required fields
+      const sessionData = {
+        id: req.body.id || randomUUID(),
+        hostPublicKey: req.body.hostPublicKey,
+        signature: req.body.signature || 'temp-signature', // Will be overwritten below
+        expiresAt: expiresAt
+      };
+      
+      // Validate the session data
+      const validatedSessionData = insertSessionSchema.parse(sessionData);
+      
+      const session = await storage.createSession(validatedSessionData);
+      
+      // Generate QR data with signature
+      const qrData = `${session.id}|${session.hostPublicKey}|${session.expiresAt.getTime()}`;
+      const signature = createSignature(qrData);
+      
+      // Update session with real signature
+      await storage.updateSession(session.id, { signature });
+      
+      const qrUrl = `${req.protocol}://${req.get('host')}/join?s=${session.id}&epk=${encodeURIComponent(session.hostPublicKey)}&exp=${session.expiresAt.getTime()}&sig=${signature}`;
+      
+      res.json({
+        session,
+        qrUrl,
+        expiresIn: SESSION_TTL_MINUTES * 60
+      });
+    } catch (error) {
+      console.error('Session creation error:', error);
+      res.status(400).json({ error: 'Invalid session data' });
+    }
+  });
+  
+  // Get session details
+  app.get('/api/sessions/:id', async (req, res) => {
+    try {
+      const session = await storage.getSession(req.params.id);
+      if (!session) {
+        return res.status(404).json({ error: 'Session not found or expired' });
+      }
+      
+      res.json(session);
+    } catch (error) {
+      console.error('Session retrieval error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+  
+  // Join session (client)
+  app.post('/api/sessions/:id/join', async (req, res) => {
+    try {
+      const sessionJoinData = sessionJoinSchema.parse(req.body);
+      const session = await storage.getSession(req.params.id);
+      
+      if (!session) {
+        return res.status(404).json({ error: 'Session not found or expired' });
+      }
+      
+      res.json({
+        sessionId: session.id,
+        hostPublicKey: session.hostPublicKey,
+        clientPublicKey: sessionJoinData.clientPublicKey
+      });
+    } catch (error) {
+      console.error('Session join error:', error);
+      res.status(400).json({ error: 'Invalid join data' });
+    }
+  });
+  
+  // Verify QR signature
+  app.post('/api/verify-qr', async (req, res) => {
+    try {
+      const { sessionId, hostPublicKey, expiration, signature } = req.body;
+      
+      // Check if session is still valid
+      if (Date.now() > expiration) {
+        return res.status(400).json({ error: 'QR code expired' });
+      }
+      
+      // Verify signature
+      const data = `${sessionId}|${hostPublicKey}|${expiration}`;
+      if (!verifySignature(data, signature)) {
+        return res.status(400).json({ error: 'Invalid QR signature' });
+      }
+      
+      // Check if session exists
+      const session = await storage.getSession(sessionId);
+      if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+      
+      res.json({ valid: true, session });
+    } catch (error) {
+      console.error('QR verification error:', error);
+      res.status(400).json({ error: 'Invalid verification data' });
+    }
+  });
+  
+  // Delete session
+  app.delete('/api/sessions/:id', async (req, res) => {
+    try {
+      await storage.deleteSession(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Session deletion error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+  
+  // Health check
+  app.get('/api/health', (req, res) => {
+    res.json({ 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      websocketConnections: connectedClients.size
+    });
+  });
+
+  return httpServer;
+}
