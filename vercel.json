@@ -5,7 +5,6 @@
   "outputDirectory": "../dist/public",
   "installCommand": "npm ci",
   "framework": "vite",
-  "rootDirectory": "client",
   "rewrites": [
     {
       "source": "/(.*)",
