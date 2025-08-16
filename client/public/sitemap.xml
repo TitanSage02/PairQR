@@ -8,7 +8,7 @@
 
   <!-- Homepage -->
   <url>
-    <loc>https://PairQR.app/</loc>
+    <loc>https://pairqr.com/</loc>
     <lastmod>2025-08-15T00:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -17,16 +17,16 @@
 
   <!-- Join page -->
   <url>
-    <loc>https://PairQR.app/join</loc>
+    <loc>https://pairqr.com/join</loc>
     <lastmod>2025-08-15T00:00:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <mobile:mobile/>
   </url>
 
-  <!-- Features pages (for future SEO content) -->
+  <!-- Features pages  -->
   <url>
-    <loc>https://PairQR.app/features</loc>
+    <loc>https://pairqr.com/features</loc>
     <lastmod>2025-08-15T00:00:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -35,7 +35,7 @@
 
   <!-- Privacy policy -->
   <url>
-    <loc>https://PairQR.app/privacy</loc>
+    <loc>https://pairqr.com/privacy</loc>
     <lastmod>2025-08-15T00:00:00+00:00</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
@@ -43,7 +43,7 @@
 
   <!-- Terms of service -->
   <url>
-    <loc>https://PairQR.app/terms</loc>
+    <loc>https://pairqr.com/terms</loc>
     <lastmod>2025-08-15T00:00:00+00:00</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
