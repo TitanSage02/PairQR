@@ -227,7 +227,7 @@ export function LandingPage({ onStartHosting, onStartScanning }: LandingPageProp
               onClick={() => setShowPremiumNotification(true)}
               size="lg" 
               variant="outline"
-              className="px-8 py-4 text-lg font-semibold border-2 border-white/30 text-white hover:bg-white/10 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+              className="px-8 py-4 text-lg font-semibold border-2 border-white/30 text-blue-600 hover:bg-white/10 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
             >
               <i className="fas fa-star mr-3"></i>
               Premium Coming Soon
