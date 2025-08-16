@@ -1,11 +1,10 @@
 {
   "name": "pairqr",
   "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": "../dist/public",
+  "buildCommand": "cd client && npm ci && npm run build",
+  "outputDirectory": "dist/public",
   "installCommand": "npm ci",
-  "framework": "vite",
-  "cwd": "client",
+  "framework": null,
   "rewrites": [
     {
       "source": "/(.*)",
