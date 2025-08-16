@@ -72,6 +72,7 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#2563eb" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="PairQR" />
@@ -79,7 +80,7 @@
     <!-- Performance and Security Headers -->
     <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(), geolocation=(), payment=()">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
+    <!-- Remove X-Frame-Options from meta tag - it should only be set via HTTP header -->
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     
     <!-- Preload critical resources -->
