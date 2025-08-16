@@ -100,8 +100,27 @@ class PrivacyFirstAnalytics {
     this.queue = [];
 
     try {
+      // Only send to analytics endpoint in production or if backend is available
+      const isDevelopment = import.meta.env.DEV;
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:9000';
+      
+      if (isDevelopment) {
+        // In development, just log the analytics data
+        console.log('Analytics data (dev mode):', {
+          events,
+          userAgent: this.sanitizeUserAgent(navigator.userAgent),
+          viewport: {
+            width: Math.round(window.innerWidth / 100) * 100,
+            height: Math.round(window.innerHeight / 100) * 100
+          },
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          language: navigator.language.split('-')[0],
+        });
+        return;
+      }
+
       // Send to our privacy-focused analytics endpoint
-      await fetch('/api/analytics', {
+      await fetch(`${backendUrl}/api/analytics`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,8 +138,10 @@ class PrivacyFirstAnalytics {
       });
     } catch (error) {
       console.warn('Analytics sync failed:', error);
-      // Re-queue events for retry
-      this.queue.unshift(...events);
+      // Re-queue events for retry only in production
+      if (!import.meta.env.DEV) {
+        this.queue.unshift(...events);
+      }
     }
   }
 
