@@ -12,9 +12,9 @@ export default defineConfig({
       "@assets": path.resolve(import.meta.dirname, "..", "attached_assets"),
     },
   },
-  // Build output is placed next to the server build so Express can serve it in production
+  // Build output for Vercel deployment
   build: {
-    outDir: path.resolve(import.meta.dirname, "..", "dist", "public"),
+    outDir: "dist",
     emptyOutDir: true,
     // Performance optimizations for production
     rollupOptions: {

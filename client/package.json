@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "description": "PairQR client application - Instant secure file and text sharing with QR code pairing",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
