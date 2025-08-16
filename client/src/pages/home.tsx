@@ -185,7 +185,7 @@ export default function Home() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `instantshare-chat-${Date.now()}.json`;
+    a.download = `pairqr-chat-${Date.now()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

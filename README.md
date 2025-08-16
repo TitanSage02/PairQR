@@ -1,6 +1,6 @@
-# InstantShare 🚀
+# PairQR 🚀
 
-InstantShare is a privacy-first, secure file and text sharing platform that enables instant peer-to-peer communication with military-grade encryption. No registration required, completely free to use.
+PairQR is a privacy-first, secure file and text sharing platform that enables instant peer-to-peer communication with military-grade encryption. No registration required, completely free to use.
 
 ## ✨ Features
 
@@ -24,8 +24,8 @@ InstantShare is a privacy-first, secure file and text sharing platform that enab
 
 ```bash
 # Clone the repository
-git clone https://github.com/TitanSage02/InstantShare.git
-cd InstantShare
+git clone https://github.com/TitanSage02/PairQR.git
+cd PairQR
 
 # Install dependencies
 npm install
@@ -47,7 +47,7 @@ npm start
 ## 📁 Project Structure
 
 ```
-InstantShare/
+PairQR/
 ├── client/                 # React frontend
 │   ├── src/
 │   │   ├── components/     # Reusable UI components
@@ -100,10 +100,10 @@ The application uses Vite for building with optimizations:
 
 ```bash
 # Build Docker image
-docker build -t instantshare .
+docker build -t PairQR .
 
 # Run container
-docker run -p 3000:3000 instantshare
+docker run -p 3000:3000 PairQR
 ```
 
 ### Vercel/Netlify
@@ -135,7 +135,7 @@ npm run build
 
 ## 📊 Analytics & Privacy
 
-InstantShare includes privacy-first analytics that:
+PairQR includes privacy-first analytics that:
 
 - ✅ Collects anonymous usage statistics
 - ✅ Helps improve the product
@@ -197,9 +197,9 @@ npm run test:coverage
 
 ## 🤝 Support
 
-- **Issues**: [GitHub Issues](https://github.com/TitanSage02/InstantShare/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/TitanSage02/InstantShare/discussions)
-- **Email**: support@instantshare.app
+- **Issues**: [GitHub Issues](https://github.com/TitanSage02/PairQR/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/TitanSage02/PairQR/discussions)
+- **Email**: support@PairQR.app
 
 ## 📄 License
 
@@ -213,6 +213,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**InstantShare** - Share files instantly, securely, and privately. No registration required, always free.
+**PairQR** - Share files instantly, securely, and privately. No registration required, always free.
 
 Made with ❤️ for privacy and security.
