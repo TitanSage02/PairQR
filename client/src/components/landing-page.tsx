@@ -121,7 +121,7 @@ export function LandingPage({ onStartHosting, onStartScanning }: LandingPageProp
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Why Choose InstantShare?
+              Why Choose PairQR?
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Built with privacy-first principles and modern technology for the ultimate sharing experience.
@@ -207,7 +207,7 @@ export function LandingPage({ onStartHosting, onStartScanning }: LandingPageProp
             Ready to Share Securely?
           </h2>
           <p className="text-xl mb-8 opacity-90">
-            Join thousands of users who trust InstantShare for their secure file sharing needs.
+            Join thousands of users who trust PairQR for their secure file sharing needs.
             <br />
             <strong>No registration required</strong> • <strong>Always free</strong> • <strong>Start in seconds</strong>
           </p>
@@ -254,7 +254,7 @@ export function LandingPage({ onStartHosting, onStartScanning }: LandingPageProp
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
-              <h3 className="text-2xl font-bold mb-4">InstantShare</h3>
+              <h3 className="text-2xl font-bold mb-4">PairQR</h3>
               <p className="text-gray-300 mb-4 leading-relaxed">
                 The most secure and private way to share files and text between devices. 
                 Built with modern web technologies and privacy-first principles.
@@ -291,7 +291,7 @@ export function LandingPage({ onStartHosting, onStartScanning }: LandingPageProp
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 InstantShare. All rights reserved. Made with ❤️ for privacy.</p>
+            <p>&copy; 2025 PairQR. All rights reserved. Made with ❤️ for privacy.</p>
           </div>
         </div>
       </footer>

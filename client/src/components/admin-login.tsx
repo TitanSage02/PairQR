@@ -64,7 +64,7 @@ export function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4 shadow-lg">
             <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">InstantShare</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">PairQR</h1>
           <p className="text-blue-200">Admin Dashboard</p>
         </div>
 
@@ -136,7 +136,7 @@ export function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
 
             <div className="mt-6 pt-4 border-t border-gray-200">
               <p className="text-xs text-gray-500 text-center">
-                🔒 Secure admin access to InstantShare platform
+                🔒 Secure admin access to PairQR platform
               </p>
             </div>
           </CardContent>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'instantshare-v1.0.0';
+const CACHE_NAME = 'PairQR-v1.0.0';
 const OFFLINE_URL = '/offline.html';
 
 // Files to cache for offline functionality
@@ -235,7 +235,7 @@ self.addEventListener('push', (event) => {
     actions: [
       {
         action: 'open',
-        title: 'Open InstantShare'
+        title: 'Open PairQR'
       },
       {
         action: 'close',
@@ -245,7 +245,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification('InstantShare', options)
+    self.registration.showNotification('PairQR', options)
   );
 });
 

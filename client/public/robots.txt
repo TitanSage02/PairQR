@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap location
-Sitemap: https://instantshare.app/sitemap.xml
+Sitemap: https://PairQR.app/sitemap.xml
 
 # SEO optimizations
 Disallow: /api/

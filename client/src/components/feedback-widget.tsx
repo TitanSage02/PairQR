@@ -66,7 +66,7 @@ export function FeedbackWidget({ onClose, sessionInfo }: FeedbackWidgetProps) {
       
       toast({
         title: "Feedback Sent!",
-        description: "Thank you for helping us improve InstantShare.",
+        description: "Thank you for helping us improve PairQR.",
       });
 
       // Auto-close after showing thanks
@@ -122,7 +122,7 @@ export function FeedbackWidget({ onClose, sessionInfo }: FeedbackWidgetProps) {
             <div className="space-y-6">
               <div className="text-center">
                 <h3 className="text-lg font-semibold mb-2">How was your experience?</h3>
-                <p className="text-gray-600 text-sm">Your feedback helps us improve InstantShare</p>
+                <p className="text-gray-600 text-sm">Your feedback helps us improve PairQR</p>
               </div>
 
               <div className="flex justify-center gap-2">
@@ -171,7 +171,7 @@ export function FeedbackWidget({ onClose, sessionInfo }: FeedbackWidgetProps) {
                 </h3>
                 <p className="text-gray-600 text-sm">
                   {rating >= 4 
-                    ? "What did you love about InstantShare?"
+                    ? "What did you love about PairQR?"
                     : "How can we improve your experience?"
                   }
                 </p>
@@ -245,7 +245,7 @@ export function FeedbackWidget({ onClose, sessionInfo }: FeedbackWidgetProps) {
               <div className="text-6xl">🙏</div>
               <h3 className="text-lg font-semibold">Thank You!</h3>
               <p className="text-gray-600">
-                Your feedback helps us make InstantShare better for everyone.
+                Your feedback helps us make PairQR better for everyone.
               </p>
               <div className="text-sm text-gray-500">
                 This window will close automatically...

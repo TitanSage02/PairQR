@@ -36,14 +36,14 @@
       "sizes": "1280x720",
       "type": "image/jpeg",
       "form_factor": "wide",
-      "label": "InstantShare desktop view"
+      "label": "PairQR desktop view"
     },
     {
       "src": "/screenshot-mobile.jpg", 
       "sizes": "750x1334",
       "type": "image/jpeg",
       "form_factor": "narrow",
-      "label": "InstantShare mobile view"
+      "label": "PairQR mobile view"
     }
   ],
   "shortcuts": [
@@ -76,7 +76,7 @@
   "prefer_related_applications": false,
   "protocol_handlers": [
     {
-      "protocol": "web+instantshare",
+      "protocol": "web+PairQR",
       "url": "/join?sessionId=%s"
     }
   ]

@@ -116,7 +116,7 @@ export function PremiumNotification({ onDismiss }: PremiumNotificationProps) {
 
         <div className="text-center mb-6">
           <h3 className="text-xl font-bold text-gray-900 mb-2">
-            Love InstantShare? Premium is Coming!
+            Love PairQR? Premium is Coming!
           </h3>
           <p className="text-gray-600">
             We're working on premium features for teams and power users. 
