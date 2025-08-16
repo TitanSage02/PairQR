@@ -63,10 +63,11 @@ export async function initializeAdmin() {
 
 // Generate JWT token for admin
 export function generateAdminToken(): string {
+  const ttlHours = parseInt(process.env.ADMIN_SESSION_TTL_HOURS || '24');
   return jwt.sign(
     { role: 'admin', timestamp: Date.now() },
     JWT_SECRET,
-    { expiresIn: `${process.env.ADMIN_SESSION_TTL_HOURS || 24}h` }
+    { expiresIn: ttlHours * 3600 } // Convert hours to seconds
   );
 }
 
