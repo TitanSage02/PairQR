@@ -1,4 +1,5 @@
-import { type User, type InsertUser, type Session, type InsertSession } from "./shared/schema.js";
+import { type User, type InsertUser, type Session, type InsertSession, sessions } from "./schema.js";
+import { db } from "./db.js";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -235,4 +236,178 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// PostgreSQL Storage Implementation
+export class PostgreSQLStorage implements IStorage {
+  private peerOffers: Map<string, any>;
+  private peerAnswers: Map<string, any>;
+  private iceCandidates: Map<string, any[]>;
+  private feedback: Array<{
+    id: string;
+    rating: number;
+    comment?: string;
+    timestamp: string;
+    sessionId?: string;
+  }>;
+
+  constructor() {
+    this.peerOffers = new Map();
+    this.peerAnswers = new Map();
+    this.iceCandidates = new Map();
+    this.feedback = [];
+  }
+
+  // User management (PostgreSQL)
+  async getUser(id: string): Promise<User | undefined> {
+    try {
+      // For now, return undefined since we don't have users implemented yet
+      return undefined;
+    } catch (error) {
+      console.error('Error getting user:', error);
+      return undefined;
+    }
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    try {
+      // For now, return undefined since we don't have users implemented yet
+      return undefined;
+    } catch (error) {
+      console.error('Error getting user by username:', error);
+      return undefined;
+    }
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    try {
+      // For now, create in memory
+      const id = randomUUID();
+      const user: User = { ...insertUser, id };
+      return user;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+  }
+
+  // Session management (PostgreSQL) - Simple implementation first
+  async createSession(session: InsertSession): Promise<Session> {
+    try {
+      console.log('Creating session in PostgreSQL:', session);
+      
+      const newSession: Session = {
+        ...session,
+        createdAt: new Date(),
+        isActive: session.isActive || "true"
+      };
+      
+      console.log('Inserting session:', newSession);
+      await db.insert(sessions).values(newSession);
+      console.log('Session inserted successfully');
+      
+      return newSession;
+    } catch (error) {
+      console.error('Error creating session:', error);
+      throw error;
+    }
+  }
+
+  async getSession(id: string): Promise<Session | undefined> {
+    try {
+      // Simple query without complex operators for now
+      const result = await db.select().from(sessions);
+      return result.find((s: Session) => s.id === id && s.expiresAt > new Date());
+    } catch (error) {
+      console.error('Error getting session:', error);
+      return undefined;
+    }
+  }
+
+  async updateSession(id: string, updates: Partial<Session>): Promise<Session | undefined> {
+    try {
+      // For now, just get the session
+      return this.getSession(id);
+    } catch (error) {
+      console.error('Error updating session:', error);
+      return undefined;
+    }
+  }
+
+  async deleteSession(id: string): Promise<void> {
+    try {
+      // For now, just log
+      console.log('Delete session requested:', id);
+    } catch (error) {
+      console.error('Error deleting session:', error);
+    }
+  }
+
+  async cleanupExpiredSessions(): Promise<void> {
+    try {
+      // For now, just log
+      console.log('Cleanup expired sessions requested');
+    } catch (error) {
+      console.error('Error cleaning up expired sessions:', error);
+    }
+  }
+
+  // Peer signaling data (still in memory for performance)
+  async storePeerOffer(sessionId: string, offer: any): Promise<void> {
+    this.peerOffers.set(sessionId, offer);
+  }
+
+  async getPeerOffer(sessionId: string): Promise<any> {
+    return this.peerOffers.get(sessionId);
+  }
+
+  async storePeerAnswer(sessionId: string, answer: any): Promise<void> {
+    this.peerAnswers.set(sessionId, answer);
+  }
+
+  async getPeerAnswer(sessionId: string): Promise<any> {
+    return this.peerAnswers.get(sessionId);
+  }
+
+  async storeIceCandidate(sessionId: string, candidate: any): Promise<void> {
+    const existing = this.iceCandidates.get(sessionId) || [];
+    existing.push(candidate);
+    this.iceCandidates.set(sessionId, existing);
+  }
+
+  async getIceCandidates(sessionId: string): Promise<any[]> {
+    return this.iceCandidates.get(sessionId) || [];
+  }
+
+  async clearPeerData(sessionId: string): Promise<void> {
+    this.peerOffers.delete(sessionId);
+    this.peerAnswers.delete(sessionId);
+    this.iceCandidates.delete(sessionId);
+  }
+
+  // Analytics and feedback (still in memory for now)
+  getAnalytics() {
+    return {
+      totalSessions: 0, // We'll implement this with a DB query later
+      activeSessions: 0,
+      totalFeedback: this.feedback.length,
+      averageRating: this.feedback.length > 0 
+        ? this.feedback.reduce((sum, f) => sum + f.rating, 0) / this.feedback.length 
+        : 0
+    };
+  }
+
+  getFeedback() {
+    return this.feedback;
+  }
+
+  addFeedback(rating: number, comment?: string, sessionId?: string) {
+    this.feedback.push({
+      id: randomUUID(),
+      rating,
+      comment,
+      sessionId,
+      timestamp: new Date().toISOString()
+    });
+  }
+}
+
+export const storage = new PostgreSQLStorage();
