@@ -1,0 +1,15 @@
+server/
+scripts/
+shared/
+*.md
+.git/
+.gitignore
+node_modules/
+.env*
+docker-compose.yml
+Dockerfile
+.dockerignore
+client/node_modules/
+client/.env*
+dist/
+client/dist/
