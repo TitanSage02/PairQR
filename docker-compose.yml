@@ -1,9 +1,9 @@
 services:
-  instantshare:
+  pairqr:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: instantshare-app
+    container_name: pairqr-app
     restart: unless-stopped
     environment:
       - PORT=3000
@@ -12,17 +12,17 @@ services:
       - SESSION_TTL_MINUTES=${SESSION_TTL_MINUTES:-2}
       - JWT_SECRET=dev-secret-key
       - HMAC_SECRET=dev-hmac-key
-      - CORS_ORIGIN=http://localhost:5173
+      - CORS_ORIGIN=https://pairqr.vercel.app
       - RATE_LIMIT_WINDOW_MS=60000
       - RATE_LIMIT_MAX=100
       - REDIS_URL=redis://redis:6379
       - REDIS_TTL_SECONDS=300
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/qrninja
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/pairqr
       - TURN_STATIC_SECRET=dev-turn-secret
-      - TURN_REALM=qrninja
+      - TURN_REALM=pairqr
       - TURN_URIS=turn:coturn:3478?transport=udp,turn:coturn:3478?transport=tcp
     ports:
-      - "9000:9000"
+      - "3000:3000"
     depends_on:
       - redis
       - postgres
@@ -30,12 +30,12 @@ services:
 
   coturn:
     image: instrumentisto/coturn
-    container_name: qrninja-coturn
+    container_name: pairqr-coturn
     restart: unless-stopped
     command: >
       --no-cli --no-tcp-relay
       --listening-port=3478
-      --realm=qrninja
+      --realm=pairqr
       --use-auth-secret
       --static-auth-secret=change-me-in-production
       --min-port=49152 --max-port=49200
@@ -46,19 +46,19 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: qrninja-redis
+    container_name: pairqr-redis
     restart: unless-stopped
     volumes:
       - redis-data:/data
 
   postgres:
     image: postgres:16-alpine
-    container_name: qrninja-postgres
+    container_name: pairqr-postgres
     restart: unless-stopped
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=qrninja
+      - POSTGRES_DB=pairqr
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
