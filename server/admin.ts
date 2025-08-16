@@ -12,7 +12,7 @@ let adminData = {
   hashedPassword: '',
   salt: '',
   settings: {
-    siteName: 'InstantShare',
+    siteName: 'PairQR',
     maxSessionDuration: 2,
     enableAnalytics: true,
     enableFeedback: true,

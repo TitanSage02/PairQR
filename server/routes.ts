@@ -599,8 +599,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         exportedAt: new Date().toISOString(),
         exportedBy: req.ip
       };
-      
-      res.setHeader('Content-Disposition', 'attachment; filename="instantshare-admin-export.json"');
+
+      res.setHeader('Content-Disposition', 'attachment; filename="pairqr-admin-export.json"');
       res.setHeader('Content-Type', 'application/json');
       res.json(exportData);
       
