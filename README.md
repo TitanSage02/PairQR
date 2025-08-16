@@ -1,133 +1,172 @@
-# PairQR 🚀
+# PairQR - Secure Instant Communication
 
-PairQR is a privacy-first, secure file and text sharing platform that enables instant peer-to-peer communication with military-grade encryption. No registration required, completely free to use.
+> 🔒 Instant secure file and text sharing with QR code pairing
+
+PairQR is a privacy-first communication platform that enables secure peer-to-peer messaging and file sharing through QR code pairing. Built with modern web technologies and end-to-end encryption.
 
 ## ✨ Features
 
-- **🔒 End-to-End Encryption**: Military-grade AES-256-GCM encryption
-- **⚡ Instant Transfer**: Direct P2P connection via WebRTC
-- **🚫 No Registration**: Start sharing immediately, no accounts needed
-- **🌐 Cross-Platform**: Works on any device with a modern browser
-- **🎯 Simple QR Sharing**: One-scan connection between devices
-- **♻️ Ephemeral Sessions**: Automatic session expiration, no data storage
-- **📱 Progressive Web App**: Install like a native app
-- **🔓 Open Source**: Transparent and auditable code
+- **� End-to-End Encryption**: All messages encrypted client-side
+- **📱 QR Code Pairing**: Instant session creation via QR scanning
+- **⚡ Real-time Communication**: WebRTC peer-to-peer messaging
+- **🎯 Privacy-First**: No data persistence, ephemeral sessions
+- **📁 File Sharing**: Secure file transfer between devices
+- **👨‍💼 Admin Dashboard**: Comprehensive management interface
+- **🌐 Cross-Platform**: Works on all modern browsers
 
+## �️ Architecture
+
+This project follows a clean separation between frontend and backend:
+
+```
+PairQR/
+├── client/           # React + Vite Frontend
+│   ├── src/
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── tailwind.config.ts
+│   └── tsconfig.json
+├── server/           # Express.js Backend
+│   ├── admin.ts
+│   ├── index.ts
+│   ├── routes.ts
+│   ├── storage.ts
+│   ├── package.json
+│   ├── drizzle.config.ts
+│   └── tsconfig.json
+├── shared/           # Shared TypeScript schemas
+│   └── schema.ts
+```
+
+### 📱 Client (Frontend)
+- **Framework**: React 18 + TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS + shadcn/ui
+- **State Management**: TanStack Query
+- **WebRTC**: Native browser APIs
+- **QR Code**: jsqr library
+
+### 🖥️ Server (Backend)
+- **Runtime**: Node.js + Express
+- **Database**: PostgreSQL with Drizzle ORM
+- **WebSocket**: ws library for real-time communication
+- **Authentication**: JWT for admin sessions
+- **Security**: Helmet, CORS, Rate limiting
+
+### 🔄 Shared
+- **Schema Validation**: Zod schemas
+- **Type Safety**: Shared TypeScript interfaces
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Node.js 18+ 
+- PostgreSQL (for database features)
 - npm or yarn
 
-### Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/TitanSage02/PairQR.git
-cd PairQR
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-### Production Build
-
-```bash
-# Build the application
-npm run build
-
-# Start production server
-npm start
-```
-
-## 📁 Project Structure
-
-```
-PairQR/
-├── client/                 # React frontend
-│   ├── src/
-│   │   ├── components/     # Reusable UI components
-│   │   ├── pages/         # Page components
-│   │   ├── hooks/         # Custom React hooks
-│   │   ├── lib/           # Utilities and libraries
-│   │   └── types/         # TypeScript type definitions
-│   └── public/            # Static assets
-├── server/                # Express backend
-│   ├── index.ts          # Server entry point
-│   ├── routes.ts         # API routes
-│   └── storage.ts        # Data storage layer
-├── shared/               # Shared types and schemas
-└── docs/                # Documentation
-```
 
 ## 🔧 Configuration
 
-### Environment Variables
+### Client Configuration
 
-Create a `.env` file in the root directory:
+The client uses Vite for building and development:
+- `vite.config.ts` - Build configuration
+- `tailwind.config.ts` - Styling configuration  
+- `tsconfig.json` - TypeScript configuration
 
-```env
-# Server Configuration
-PORT=3000
-NODE_ENV=production
+### Server Configuration
 
-# Security
-HMAC_SECRET=your-secure-hmac-secret-key
+The server uses standard Node.js tooling:
+- `drizzle.config.ts` - Database ORM configuration
+- `tsconfig.json` - TypeScript configuration
+- Environment variables for runtime configuration
 
-# Session Configuration
-SESSION_TTL_MINUTES=2
+## 🚢 Deployment
 
-# Database (optional)
-DATABASE_URL=your-database-url
-```
-
-### Build Configuration
-
-The application uses Vite for building with optimizations:
-
-- **Code Splitting**: Automatic vendor and component chunking
-- **Tree Shaking**: Removes unused code
-- **Minification**: Terser with console.log removal
-- **Asset Optimization**: Inline small assets, optimize images
-
-## 🌐 Deployment
-
-### Docker
+### Client Deployment (Vercel/Netlify)
 
 ```bash
-# Build Docker image
-docker build -t PairQR .
-
-# Run container
-docker run -p 3000:3000 PairQR
-```
-
-### Vercel/Netlify
-
-The app is configured for easy deployment to modern hosting platforms:
-
-1. Connect your repository
-2. Set environment variables
-3. Deploy automatically
-
-### Traditional Hosting
-
-```bash
-# Build for production
+cd client
 npm run build
-
-# Copy dist/ folder to your server
-# Configure reverse proxy (nginx/apache)
+# Deploy the dist/ folder
 ```
 
-## 🔒 Security Features
+### Server Deployment (Railway/Heroku/VPS)
 
-- **End-to-End Encryption**: All data encrypted before transmission
-- **Perfect Forward Secrecy**: Unique keys for each session
+```bash
+cd server  
+npm run build
+# Deploy with npm start or PM2
+```
+
+### Docker Deployment
+
+```dockerfile
+# Example Dockerfile for server
+FROM node:18-alpine
+WORKDIR /app
+COPY server/package*.json ./
+RUN npm ci --only=production
+COPY server/ ./
+COPY shared/ ./shared/
+EXPOSE 9000
+CMD ["npm", "start"]
+```
+
+## 🔒 Security
+
+- **End-to-End Encryption**: Messages encrypted client-side before transmission
+- **Ephemeral Sessions**: No persistent data storage by default
+- **CORS Protection**: Configurable origin allowlists
+- **Rate Limiting**: API protection against abuse
+- **Secure Headers**: Helmet.js security headers
+- **Input Validation**: Zod schema validation on all inputs
+
+## 📈 Monitoring
+
+### Built-in Analytics
+
+- Session creation metrics
+- Message throughput tracking  
+- Error rate monitoring
+- Admin dashboard with real-time stats
+
+### Health Checks
+
+- `GET /health` - Server health status
+- `GET /api/health` - Detailed API health with metrics
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make changes in the appropriate directory (`client/` or `server/`)
+4. Run type checking: `npm run check`
+5. Test your changes locally
+6. Submit a pull request
+
+### Development Guidelines
+
+- Keep client and server completely separate
+- Use shared schemas for data validation
+- Follow TypeScript best practices
+- Add appropriate error handling
+- Update documentation for new features
+
+## 📝 License
+
+This project is open source. See the LICENSE file for details.
+
+## � Links
+
+- **Live Demo**: [pairqr.vercel.app](https://pairqr.vercel.app)
+- **Repository**: [github.com/TitanSage02/PairQR](https://github.com/TitanSage02/PairQR)
+- **Issues**: [GitHub Issues](https://github.com/TitanSage02/PairQR/issues)
+
+---
+
+Built with ❤️ for secure, privacy-first communication.
 - **HMAC Signatures**: Tamper-proof session verification  
 - **No Data Persistence**: Messages never stored on servers
 - **WebRTC Direct Connection**: Bypasses server for data transfer
