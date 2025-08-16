@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import cookieParser from "cookie-parser";
 import { storage } from "./storage";
-import { insertSessionSchema, sessionJoinSchema } from "@shared/schema";
+import { insertSessionSchema, sessionJoinSchema } from "./shared/schema.js";
 import { randomUUID } from "crypto";
 import { createHmac, timingSafeEqual } from "crypto";
 import { 

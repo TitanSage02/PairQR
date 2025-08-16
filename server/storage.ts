@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Session, type InsertSession } from "@shared/schema";
+import { type User, type InsertUser, type Session, type InsertSession } from "./shared/schema.js";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
