@@ -80,6 +80,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip Vite HMR requests during development
+  if (url.pathname.includes('@vite') || 
+      url.pathname.includes('@react-refresh') ||
+      url.pathname.includes('__vite') ||
+      url.pathname.includes('vite.svg') ||
+      url.hostname !== location.hostname) {
+    return;
+  }
+
   // Handle API requests with network-first strategy
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(networkFirstStrategy(request));
@@ -111,14 +120,20 @@ async function cacheFirstStrategy(request) {
     }
 
     const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
+    if (networkResponse.ok && networkResponse.status < 400) {
       const cache = await caches.open(CACHE_NAME);
-      cache.put(request, networkResponse.clone());
+      // Clone the response before caching
+      const responseToCache = networkResponse.clone();
+      cache.put(request, responseToCache);
     }
 
     return networkResponse;
   } catch (error) {
     console.error('Cache-first strategy failed:', error);
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     return new Response('Network error', { status: 503 });
   }
 }
@@ -128,9 +143,11 @@ async function networkFirstStrategy(request) {
   try {
     const networkResponse = await fetch(request);
     
-    if (networkResponse.ok) {
+    if (networkResponse.ok && networkResponse.status < 400) {
       const cache = await caches.open(CACHE_NAME);
-      cache.put(request, networkResponse.clone());
+      // Clone the response before caching
+      const responseToCache = networkResponse.clone();
+      cache.put(request, responseToCache);
     }
     
     return networkResponse;
@@ -154,9 +171,13 @@ async function staleWhileRevalidateStrategy(request) {
   const cachedResponse = await caches.match(request);
   
   const fetchPromise = fetch(request).then((networkResponse) => {
-    if (networkResponse.ok) {
+    if (networkResponse.ok && networkResponse.status < 400) {
       const cache = caches.open(CACHE_NAME);
-      cache.then(c => c.put(request, networkResponse.clone()));
+      cache.then(c => {
+        // Clone the response before caching
+        const responseToCache = networkResponse.clone();
+        c.put(request, responseToCache);
+      });
     }
     return networkResponse;
   }).catch(() => {
@@ -173,9 +194,11 @@ async function navigationStrategy(request) {
   try {
     const networkResponse = await fetch(request);
     
-    if (networkResponse.ok) {
+    if (networkResponse.ok && networkResponse.status < 400) {
       const cache = await caches.open(CACHE_NAME);
-      cache.put(request, networkResponse.clone());
+      // Clone the response before caching
+      const responseToCache = networkResponse.clone();
+      cache.put(request, responseToCache);
     }
     
     return networkResponse;
