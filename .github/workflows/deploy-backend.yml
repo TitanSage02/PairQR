@@ -73,19 +73,8 @@ jobs:
             shared/**
             scripts/**
           target: ${{ env.PROJECT_DIR }}/
-          strip_components: 0
           overwrite: true
-
-          # Keep transfers lean
-          exclude: |
-            **/.git/**
-            **/.github/**
-            **/node_modules/**
-            **/dist/**
-            **/.next/**
-            **/.turbo/**
-            **/.vercel/**
-            **/.cache/**
+          strip_components: 0
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -128,7 +117,26 @@ jobs:
             fi
 
             # Build & start
-            sudo $COMPOSE --env-file .env -f docker-compose.yml up -d --build
+            # Ensure project directory exists and cd into it
+            mkdir -p "$PROJECT_DIR"
+            cd "$PROJECT_DIR"
+
+            # Write env file for server
+            cat > server/.env << 'EOF'
+            NODE_ENV=production
+            PORT=3000
+            ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+            HMAC_SECRET=${{ secrets.HMAC_SECRET }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+            RATE_LIMIT_WINDOW_MS=60000
+            RATE_LIMIT_MAX=100
+            REDIS_TTL_SECONDS=300
+            TURN_STATIC_SECRET=${{ secrets.TURN_STATIC_SECRET }}
+            TURN_REALM=pairqr
+            EOF
+
+            sudo $COMPOSE --env-file server/.env -f server/docker-compose.yml up -d --build
 
             # Health check: wait up to ~60s for HTTP 200 on /health (adjust as needed)
             set +e
@@ -146,8 +154,8 @@ jobs:
 
             if [ "${ok:-0}" -ne 1 ]; then
               echo "⚠️ Health check failed. Recent logs:"
-              sudo $COMPOSE -f docker-compose.yml ps
-              sudo $COMPOSE -f docker-compose.yml logs --tail=200 || true
+              sudo $COMPOSE -f server/docker-compose.yml ps
+              sudo $COMPOSE -f server/docker-compose.yml logs --tail=200 || true
               exit 1
             fi
 
