@@ -47,8 +47,6 @@ jobs:
           missing=0
           req=(
             SSH_HOST SSH_USER SSH_KEY PROJECT_DIR
-            ADMIN_PASSWORD HMAC_SECRET JWT_SECRET
-            CORS_ORIGIN TURN_STATIC_SECRET
           )
           for k in "${req[@]}"; do
             if [ -z "${!k:-}" ]; then
