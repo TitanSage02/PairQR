@@ -38,22 +38,28 @@ jobs:
           fetch-depth: 1
 
       - name: Validate required secrets
+        shell: bash
         run: |
           set -euo pipefail
           missing=0
-          req=( SSH_HOST SSH_USER SSH_KEY PROJECT_DIR ADMIN_PASSWORD HMAC_SECRET JWT_SECRET CORS_ORIGIN TURN_STATIC_SECRET )
-          for k in "${req[@]}"; do
-            if [ -z "${!k:-}" ]; then
-              echo "❌ Missing secret: $k"; missing=1
-            else
-              echo "✅ Found: $k"
-            fi
-          done
+          check() { if [ -z "$1" ]; then echo "❌ Missing secret: $2"; missing=1; else echo "✅ Found: $2"; fi; }
+
+          check "${{ secrets.DO_HOST }}" DO_HOST
+          check "${{ secrets.DO_SSH_USER }}" DO_SSH_USER
+          check "${{ secrets.DO_SSH_KEY }}" DO_SSH_KEY
+          check "${{ secrets.PROJECT_DIR }}" PROJECT_DIR
+
+          check "${{ secrets.ADMIN_PASSWORD }}" ADMIN_PASSWORD
+          check "${{ secrets.HMAC_SECRET }}" HMAC_SECRET
+          check "${{ secrets.JWT_SECRET }}" JWT_SECRET
+          check "${{ secrets.CORS_ORIGIN }}" CORS_ORIGIN
+          check "${{ secrets.TURN_STATIC_SECRET }}" TURN_STATIC_SECRET
+
           if [ "$missing" -eq 1 ]; then
             echo "One or more required secrets are missing. Add them in Settings » Secrets and variables » Actions." >&2
             exit 1
           fi
-
+          
       - name: Inspect files to upload
         run: |
           set -euxo pipefail
