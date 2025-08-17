@@ -2,9 +2,9 @@
   "name": "pairqr",
   "version": 2,
   "framework": "vite",
-  "installCommand": "(rm -rf node_modules package-lock.json || true) && npm install",
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
+  "installCommand": "cd client && (rm -rf node_modules package-lock.json || true) && npm install",
+  "buildCommand": "cd client && npm run build",
+  "outputDirectory": "client/dist",
   "rewrites": [
     {
       "source": "/(.*)",
