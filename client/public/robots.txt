@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap location
-Sitemap: https://PairQR.app/sitemap.xml
+Sitemap: https://pairqr.app/sitemap.xml
 
 # SEO optimizations
 Disallow: /api/
