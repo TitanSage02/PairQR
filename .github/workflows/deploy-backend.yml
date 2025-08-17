@@ -153,6 +153,9 @@ jobs:
             COMPOSE="docker compose"
             if ! docker compose version >/dev/null 2>&1; then COMPOSE="docker-compose"; fi
 
+            # Down
+            sudo $COMPOSE --env-file server/.env -f server/docker-compose.yml down
+
             # Build & run
             sudo $COMPOSE --env-file server/.env -f server/docker-compose.yml up -d --build
 
