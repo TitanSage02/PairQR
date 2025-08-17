@@ -1,0 +1,13 @@
+{
+  # email for Let's Encrypt
+  email contact@pairqr.app
+}
+
+api.pairqr.app {
+  encode gzip
+
+  reverse_proxy pairqr:3000 {
+    header_up X-Forwarded-Proto {scheme}
+    header_up X-Forwarded-Host  {host}
+  }
+}
