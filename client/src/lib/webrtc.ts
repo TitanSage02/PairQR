@@ -103,7 +103,7 @@ export class WebRTCManager {
       }
 
       // Use backend URL from environment variables
-      const backendUrl = import.meta.env.VITE_SIGNALING_URL || import.meta.env.VITE_BACKEND_URL || 'http://localhost:9000';
+      const backendUrl = import.meta.env.VITE_SIGNALING_URL || import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
       const wsUrl = backendUrl.replace('http', 'ws') + '/ws';
       
       try {

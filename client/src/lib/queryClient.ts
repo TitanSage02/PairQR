@@ -13,7 +13,7 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   // Prepend backend URL for API calls
-  const backendUrl = import.meta.env.VITE_SIGNALING_URL || 'http://localhost:9000';
+  const backendUrl = import.meta.env.VITE_SIGNALING_URL || 'http://localhost:3000';
   const fullUrl = url.startsWith('/api') ? `${backendUrl}${url}` : url;
   
   const res = await fetch(fullUrl, {
@@ -37,7 +37,7 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     // Prepend backend URL for API calls
-    const backendUrl = import.meta.env.VITE_SIGNALING_URL || 'http://localhost:9000';
+    const backendUrl = import.meta.env.VITE_SIGNALING_URL || 'http://localhost:3000';
     const url = queryKey.join("/");
     const fullUrl = url.startsWith('/api') ? `${backendUrl}${url}` : url;
     
