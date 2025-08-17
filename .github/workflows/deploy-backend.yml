@@ -17,10 +17,6 @@ concurrency:
   group: deploy-backend-${{ github.ref }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
   deploy:
     name: Deploy to Droplet (production)
@@ -35,52 +31,48 @@ jobs:
       SSH_PORT: ${{ secrets.DO_SSH_PORT || '22' }}
       PROJECT_DIR: ${{ secrets.PROJECT_DIR }}
 
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-          submodules: recursive
 
-      - name: Validate required secrets
+      - name: Validate required secrets (minimal for copy step)
         run: |
           set -euo pipefail
           missing=0
-          req=(
-            SSH_HOST SSH_USER SSH_KEY PROJECT_DIR
-          )
-          for k in "${req[@]}"; do
-            if [ -z "${!k:-}" ]; then
-              echo "❌ Missing secret: $k"
-              missing=1
-            else
-              echo "✅ Found: $k"
-            fi
+          for k in SSH_HOST SSH_USER SSH_KEY PROJECT_DIR; do
+            if [ -z "${!k:-}" ]; then echo "❌ Missing secret: $k"; missing=1; else echo "✅ Found: $k"; fi
           done
           if [ "$missing" -eq 1 ]; then
-            echo "One or more required secrets are missing. Add them in Settings » Secrets and variables » Actions." >&2
+            echo "Add missing secrets in Settings » Secrets and variables » Actions." >&2
             exit 1
           fi
 
+      - name: Inspect files to upload
+        run: |
+          set -euxo pipefail
+          shopt -s globstar nullglob dotglob
+          files=( ./server/** ./shared/** ./scripts/** )
+          printf 'Matched files:\n'; printf ' - %s\n' "${files[@]}"
+          (( ${#files[@]} )) || { echo "No files matched. Check paths or add files."; exit 1; }
+
       - name: Copy server files to Droplet
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ env.SSH_HOST }}
           username: ${{ env.SSH_USER }}
           key: ${{ env.SSH_KEY }}
           port: ${{ env.SSH_PORT }}
-          source: |
-            server/**
-            shared/**
-            scripts/**
-            
+          source: "./server/**,./shared/**,./scripts/**"
           target: ${{ env.PROJECT_DIR }}/
           overwrite: true
           strip_components: 0
+          timeout: 30s
+          command_timeout: 10m
 
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ env.SSH_HOST }}
           username: ${{ env.SSH_USER }}
@@ -89,10 +81,8 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-
             PROJECT_DIR="${PROJECT_DIR}"
 
-            # Always have curl & ufw available for later steps
             if ! command -v curl >/dev/null 2>&1; then
               sudo apt-get update -y && sudo apt-get install -y curl
             fi
@@ -100,31 +90,20 @@ jobs:
               sudo apt-get update -y && sudo apt-get install -y ufw || true
             fi
 
-            # Ensure Docker is installed and running
             if ! command -v docker >/dev/null 2>&1; then
               curl -fsSL https://get.docker.com | sh
             fi
             sudo systemctl enable --now docker || true
 
-            # Optional firewall rules
             if command -v ufw >/dev/null 2>&1; then
               sudo ufw allow 3000/tcp || true
               sudo ufw allow 3478/tcp || true
               sudo ufw allow 3478/udp || true
             fi
-            
-            # Choose compose command
-            COMPOSE="docker compose"
-            if ! docker compose version >/dev/null 2>&1; then
-              COMPOSE="docker-compose"
-            fi
 
-            # Build & start
-            # Ensure project directory exists and cd into it
-            mkdir -p "$PROJECT_DIR"
+            mkdir -p "$PROJECT_DIR/server"
             cd "$PROJECT_DIR"
 
-            # Write env file for server
             cat > server/.env << 'EOF'
             NODE_ENV=production
             PORT=3000
@@ -139,22 +118,19 @@ jobs:
             TURN_REALM=pairqr
             EOF
 
+            COMPOSE="docker compose"
+            if ! docker compose version >/dev/null 2>&1; then COMPOSE="docker-compose"; fi
+
             sudo $COMPOSE --env-file server/.env -f server/docker-compose.yml up -d --build
 
-            # Health check: wait up to ~60s for HTTP 200 on /health (adjust as needed)
             set +e
             for i in $(seq 1 20); do
               status=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/health || true)
-              if [ "$status" = "200" ]; then
-                echo "✅ Service healthy (HTTP 200)."
-                ok=1
-                break
-              fi
+              if [ "$status" = "200" ]; then echo "✅ Service healthy (HTTP 200)."; ok=1; break; fi
               echo "⏳ Waiting for service... ($i/20) Last status: ${status:-N/A}"
               sleep 3
             done
             set -e
-
             if [ "${ok:-0}" -ne 1 ]; then
               echo "⚠️ Health check failed. Recent logs:"
               sudo $COMPOSE -f server/docker-compose.yml ps
@@ -162,5 +138,4 @@ jobs:
               exit 1
             fi
 
-            # Prune dangling build cache older than 24h (keeps useful cache)
             sudo docker system prune -af --filter "until=24h" || true
