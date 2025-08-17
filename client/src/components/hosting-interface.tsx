@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Wifi, RefreshCw, Clock, Shield, Key, FileSignature, Info } from 'lucide-react';
+import { Wifi, RefreshCw, Clock, Shield, Key, FileSignature, Info, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateQRCode, getTimeRemaining } from '../lib/qr-utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface HostingInterfaceProps {
   sessionId: string;
@@ -18,6 +19,27 @@ export function HostingInterface({
 }: HostingInterfaceProps) {
   const [qrCodeImage, setQrCodeImage] = useState<string>('');
   const [timeRemaining, setTimeRemaining] = useState<string>('02:00');
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+
+  const copySessionId = async () => {
+    try {
+      await navigator.clipboard.writeText(sessionId);
+      setCopied(true);
+      toast({
+        title: "Copied!",
+        description: "Session ID copied to clipboard",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+      toast({
+        title: "Copy failed",
+        description: "Could not copy to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     generateQRCode(qrUrl).then(setQrCodeImage).catch(console.error);
@@ -77,9 +99,24 @@ export function HostingInterface({
             </div>
             
             <div className="space-y-3">
-              <div className="bg-gray-100 rounded-lg p-3 font-mono text-xs text-center">
-                <span className="text-muted">Session ID:</span> 
-                <span className="text-gray-900 ml-1">{sessionId}</span>
+              <div className="bg-gray-100 rounded-lg p-3 flex items-center justify-between">
+                <div className="flex-1">
+                  <span className="text-muted text-xs">Session ID:</span>
+                  <div className="font-mono text-sm text-gray-900 mt-1">{sessionId}</div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={copySessionId}
+                  className="ml-2 h-8 w-8 p-0"
+                  title="Copy Session ID"
+                >
+                  {copied ? (
+                    <Check className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </Button>
               </div>
               
               <div className="flex items-center justify-center space-x-2 text-sm text-muted">
