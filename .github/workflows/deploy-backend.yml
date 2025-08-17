@@ -160,13 +160,22 @@ jobs:
             sudo $COMPOSE --env-file server/.env -f server/docker-compose.yml up -d --build
 
             # Healthcheck
-            set +e
-            for i in $(seq 1 20); do
-              code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:80/health || true)
-              [ "$code" = "200" ] && { echo "✅ Service healthy (HTTP 200)."; ok=1; break; }
-              echo "⏳ Waiting for service... ($i/20) Last code: ${code:-N/A}"
-              sleep 3
+            HOST="api.pairqr.app"
+            URL="https://${HOST}/health"
+            ok=0
+            for i in $(seq 1 30); do
+              code=$(curl -fsS -o /dev/null -w "%{http_code}" -L \
+                --connect-timeout 3 --retry 2 \
+                --resolve "${HOST}:443:127.0.0.1" "$URL" || true)
+              if [ "$code" = "200" ]; then
+                echo "✅ Service healthy (HTTP 200)."
+                ok=1; break
+              fi
+              echo "⏳ Waiting for service... ($i/30) code=${code:-N/A}"
+              sleep 2
             done
+            [ "$ok" -eq 1 ] || { echo "❌ Healthcheck failed"; exit 1; }
+
             set -e
             if [ "${ok:-0}" -ne 1 ]; then
               echo "⚠️ Health check failed. Recent logs:"
