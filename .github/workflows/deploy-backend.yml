@@ -35,11 +35,13 @@ jobs:
       SSH_PORT: ${{ secrets.DO_SSH_PORT || '22' }}
       PROJECT_DIR: ${{ secrets.PROJECT_DIR }}
 
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          submodules: recursive
 
       - name: Validate required secrets
         run: |
@@ -72,6 +74,7 @@ jobs:
             server/**
             shared/**
             scripts/**
+            
           target: ${{ env.PROJECT_DIR }}/
           overwrite: true
           strip_components: 0
