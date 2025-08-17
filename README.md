@@ -238,7 +238,7 @@ npm run test:coverage
 
 - **Issues**: [GitHub Issues](https://github.com/TitanSage02/PairQR/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/TitanSage02/PairQR/discussions)
-- **Email**: support@PairQR.app
+- **Email**: support@pairqr.app
 
 ## 📄 License
 
