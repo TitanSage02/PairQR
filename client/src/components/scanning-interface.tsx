@@ -62,11 +62,11 @@ export function ScanningInterface({ onQRScanned }: ScanningInterfaceProps) {
     };
   }, []);
 
-  // Handle a valid QR detection: stop scanning and redirect to the decoded URL
-  const handleValidQRCode = (decodedUrl: string, parsed: any) => {
+  // Handle a valid QR detection: join session in-app using parsed data (no external redirect)
+  const handleValidQRCode = (_decodedUrl: string, parsed: any) => {
     try {
       if (redirectedRef.current) return;
-      console.log('[QR] Valid QR detected, redirecting to:', decodedUrl);
+      console.log('[QR] Valid QR detected, joining session in-app:', parsed.sessionId);
       
       // Call existing behavior for internal flow
       setQrData(parsed);
@@ -75,16 +75,8 @@ export function ScanningInterface({ onQRScanned }: ScanningInterfaceProps) {
       // Prevent duplicate triggers
       redirectedRef.current = true;
       
-      // Small delay to ensure UI updates flush, then redirect
-      setTimeout(() => {
-        try {
-          window.location.assign(decodedUrl);
-        } catch (redirectError) {
-          console.error('Redirect failed:', redirectError);
-          // Fallback to internal flow if redirect fails
-          onQRScanned(parsed.sessionId, parsed.hostPublicKey);
-        }
-      }, 100);
+      // Immediately proceed with in-app join flow
+      onQRScanned(parsed.sessionId, parsed.hostPublicKey);
     } catch (error) {
       console.error('Error handling QR code:', error);
       // Fallback to internal flow
