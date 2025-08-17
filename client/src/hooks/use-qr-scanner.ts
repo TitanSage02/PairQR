@@ -14,15 +14,24 @@ export function useQRScanner() {
   const scanIntervalRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  const stopScanning = useCallback(() => {
+    setIsScanning(false);
+    
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current);
+      scanIntervalRef.current = null;
+    }
+  }, []);
+
   const scanFrame = useCallback(() => {
-    if (!videoRef.current || !isInitialized) {
+    if (!videoRef.current || !isInitialized || !isScanning) {
       return;
     }
     
     const video = videoRef.current;
     
-    // Check if video has valid dimensions
-    if (video.videoWidth === 0 || video.videoHeight === 0) {
+    // Check if video has valid dimensions and is playing
+    if (video.videoWidth === 0 || video.videoHeight === 0 || video.paused) {
       return;
     }
     
@@ -41,27 +50,30 @@ export function useQRScanner() {
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       
-      // Use jsQR to scan for QR codes
+      // Use jsQR to scan for QR codes with multiple inversion attempts for better detection
       const code = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: "dontInvert",
+        inversionAttempts: "attemptBoth",
       });
       
       if (code) {
+        console.log('QR Code detected:', code.data);
         const parsed = parseQRUrl(code.data);
         
         if (parsed && !isQRExpired(parsed)) {
+          console.log('Valid QR code found:', parsed);
           setQrData(parsed);
-          setIsScanning(false);
-          // stopScanning will be called externally
+          stopScanning(); // Stop scanning immediately when found
         } else if (parsed && isQRExpired(parsed)) {
           setError('QR code has expired');
+        } else {
+          console.log('Invalid QR code format');
         }
       }
     } catch (error) {
       console.error('QR scanning error:', error);
       // Continue scanning despite error
     }
-  }, [isInitialized, videoRef]);
+  }, [isInitialized, isScanning, videoRef, stopScanning]);
 
   const startScanning = useCallback(async () => {
     try {
@@ -71,26 +83,17 @@ export function useQRScanner() {
       // Always start camera first
       await startCamera();
       
-      // Wait a bit for camera to initialize
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait a bit for camera to initialize and get proper video dimensions
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       setIsScanning(true);
       
-      // Start scanning frames
-      scanIntervalRef.current = window.setInterval(scanFrame, 100); // 10 FPS
+      // Start scanning frames at higher frequency for better responsiveness
+      scanIntervalRef.current = window.setInterval(scanFrame, 50); // 20 FPS
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to start scanning');
     }
   }, [startCamera, scanFrame]);
-
-  const stopScanning = useCallback(() => {
-    setIsScanning(false);
-    
-    if (scanIntervalRef.current) {
-      clearInterval(scanIntervalRef.current);
-      scanIntervalRef.current = null;
-    }
-  }, []);
 
   const resetScanner = useCallback(() => {
     stopScanning();

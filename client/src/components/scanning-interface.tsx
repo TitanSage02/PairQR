@@ -23,11 +23,15 @@ export function ScanningInterface({ onQRScanned }: ScanningInterfaceProps) {
     startCamera 
   } = useQRScanner();
 
-  // Auto-start camera when component mounts
+  // Auto-start camera and scanning when component mounts
   useEffect(() => {
     const initCamera = async () => {
       try {
         await startCamera();
+        // Automatically start scanning once camera is ready
+        setTimeout(() => {
+          handleStartScanning();
+        }, 1000);
       } catch (error) {
         console.error('Failed to initialize camera:', error);
       }
