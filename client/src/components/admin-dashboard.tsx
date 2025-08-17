@@ -22,7 +22,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 interface AdminDashboardProps {
-  token: string;
+  token: string | null;
   onLogout: () => void;
 }
 
@@ -65,10 +65,11 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch('/api/admin/dashboard', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+      const baseUrl = import.meta.env.VITE_SIGNALING_URL || 'http://localhost:3000';
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const response = await fetch(`${baseUrl}/api/admin/dashboard`, {
+        headers,
         credentials: 'include'
       });
 
@@ -97,7 +98,8 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/admin/logout', {
+  const baseUrl = import.meta.env.VITE_SIGNALING_URL || 'http://localhost:3000';
+  await fetch(`${baseUrl}/api/admin/logout`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -110,10 +112,11 @@ export function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
 
   const handleExport = async () => {
     try {
-      const response = await fetch('/api/admin/export', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+  const baseUrl = import.meta.env.VITE_SIGNALING_URL || 'http://localhost:3000';
+      const exportHeaders: Record<string, string> = {};
+      if (token) exportHeaders['Authorization'] = `Bearer ${token}`;
+      const response = await fetch(`${baseUrl}/api/admin/export`, {
+        headers: exportHeaders,
         credentials: 'include'
       });
 

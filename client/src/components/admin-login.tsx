@@ -29,7 +29,8 @@ export function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
     setError('');
 
     try {
-      const response = await fetch('/api/admin/login', {
+  const baseUrl = import.meta.env.VITE_SIGNALING_URL || 'http://localhost:3000';
+      const response = await fetch(`${baseUrl}/api/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,7 +46,10 @@ export function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
           title: "Login Successful",
           description: "Welcome to the admin dashboard",
         });
-        onLoginSuccess(data.token);
+        
+  // Persist token for subsequent requests in this session
+  try { sessionStorage.setItem('pairqr_admin_token', data.token); } catch {}
+  onLoginSuccess(data.token);
       } else {
         setError(data.error || 'Login failed');
       }
