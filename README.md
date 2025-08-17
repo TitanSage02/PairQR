@@ -114,6 +114,61 @@ EXPOSE 9000
 CMD ["npm", "start"]
 ```
 
+### VPS (DigitalOcean) via Docker + GitHub Actions
+
+Ce dépôt contient un workflow prêt à l’emploi pour déployer le backend sur un Droplet via Docker Compose et SSH.
+
+1) Prérequis
+- Un Droplet Ubuntu (x64) accessible en SSH (IP publique, port 22 par défaut)
+- Une clé SSH (privée côté GitHub, publique installée sur le Droplet)
+- Un répertoire cible sur le Droplet, ex. `/opt/pairqr`
+
+2) Préparer le Droplet (une seule fois)
+- Connecte-toi en SSH et crée le dossier projet:
+	- `sudo mkdir -p /opt/pairqr && sudo chown $USER:$USER /opt/pairqr`
+- Optionnel: activer et configurer UFW si pas déjà fait:
+	- `sudo ufw allow OpenSSH && sudo ufw allow 3000/tcp && sudo ufw allow 3478/tcp && sudo ufw allow 3478/udp && sudo ufw enable`
+- Docker est installé automatiquement par le workflow si absent.
+
+3) Configurer les Secrets GitHub (Settings > Secrets and variables > Actions)
+- Connexion SSH
+	- `DO_HOST`: IP/nom du Droplet (ex: 203.0.113.10)
+	- `DO_SSH_USER`: utilisateur SSH (ex: root ou un sudoer)
+	- `DO_SSH_KEY`: contenu de la clé privée SSH (PEM)
+	- `DO_SSH_PORT`: port SSH (ex: 22)
+	- `PROJECT_DIR`: répertoire cible sur le Droplet (ex: `/opt/pairqr`)
+- Secrets applicatifs (voir `server/.env.example`)
+	- `ADMIN_PASSWORD`
+	- `HMAC_SECRET`
+	- `JWT_SECRET`
+	- `CORS_ORIGIN` (ex: `https://pairqr.vercel.app,https://ton-domaine.com`)
+	- `TURN_STATIC_SECRET`
+- Optionnels (si tu veux surcharger les valeurs par défaut): `SESSION_TTL_MINUTES`, `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, `REDIS_TTL_SECONDS`, `DATABASE_URL`, `TURN_REALM`, `TURN_URIS`, `REDIS_URL`.
+
+4) Déclencher le déploiement
+- Pousse sur la branche `main` (les modifications dans `server/**`, `shared/**`, `scripts/**` déclenchent le workflow)
+- Le workflow `.github/workflows/deploy-backend.yml` va:
+	- Copier `server/`, `shared/`, `scripts/` sur le Droplet
+	- Écrire `server/.env` sur le Droplet à partir des secrets
+	- Lancer `docker compose -f server/docker-compose.yml up -d --build`
+
+5) Vérifications
+- Santé API: `curl http://<IP_DROPLET>:3000/health`
+- Conteneurs: `ssh <user>@<ip> "docker ps"`
+- Logs backend: `ssh <user>@<ip> "docker logs -f pairqr-app"`
+
+6) Mises à jour / Rollback
+- Toute modification pushée sur `main` redéploie automatiquement.
+- Pour revenir en arrière: fais un `git revert` du commit problématique et push à nouveau sur `main`.
+
+7) Conseils prod
+- Place le backend derrière un reverse proxy (Nginx/Caddy) + TLS.
+- Ajuste `CORS_ORIGIN` avec tes domaines réels.
+- Garde `ADMIN_PASSWORD`, `JWT_SECRET`, `HMAC_SECRET`, `TURN_STATIC_SECRET` forts et privés.
+
+Chemin du workflow: `.github/workflows/deploy-backend.yml`
+
+
 ## 🔒 Security
 
 - **End-to-End Encryption**: Messages encrypted client-side before transmission
