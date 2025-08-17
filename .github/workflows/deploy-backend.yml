@@ -1,0 +1,91 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'server/**'
+      - 'shared/**'
+      - 'scripts/**'
+      - '.github/workflows/deploy-backend.yml'
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy server files to Droplet
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_SSH_USER }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          port: ${{ secrets.DO_SSH_PORT }}
+          source: |
+            server/**
+            shared/**
+            scripts/**
+          target: ${{ secrets.PROJECT_DIR }}/
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_SSH_USER }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          port: ${{ secrets.DO_SSH_PORT }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            PROJECT_DIR="${{ secrets.PROJECT_DIR }}"
+
+            # Ensure base tools and Docker
+            if ! command -v docker >/dev/null 2>&1; then
+              curl -fsSL https://get.docker.com | sh
+            fi
+            sudo systemctl enable --now docker || true
+
+            # Optional firewall rules
+            if command -v ufw >/dev/null 2>&1; then
+              sudo ufw allow 3000/tcp || true
+              sudo ufw allow 3478/tcp || true
+              sudo ufw allow 3478/udp || true
+            fi
+
+            mkdir -p "$PROJECT_DIR/server"
+            cd "$PROJECT_DIR"
+
+            # Write/update env file consumed by docker compose (server/.env)
+            cat > server/.env << 'EOF'
+            NODE_ENV=production
+            PORT=3000
+            ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+            HMAC_SECRET=${{ secrets.HMAC_SECRET }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+            RATE_LIMIT_WINDOW_MS=60000
+            RATE_LIMIT_MAX=100
+            REDIS_TTL_SECONDS=300
+            TURN_STATIC_SECRET=${{ secrets.TURN_STATIC_SECRET }}
+            TURN_REALM=pairqr
+            EOF
+
+            # Build and start services (support both docker compose and docker-compose)
+            if docker compose version >/dev/null 2>&1; then
+              sudo docker compose --env-file server/.env -f server/docker-compose.yml up -d --build
+            else
+              sudo docker-compose --env-file server/.env -f server/docker-compose.yml up -d --build
+            fi
+
+            # Cleanup old build cache (optional)
+            sudo docker system prune -f || true
+
+    env:
+      # Fail fast if required secrets are missing
+      REQUIRED_SECRETS: DO_HOST,DO_SSH_USER,DO_SSH_KEY,PROJECT_DIR,ADMIN_PASSWORD,HMAC_SECRET,JWT_SECRET
