@@ -1,13 +1,18 @@
-{
-  # email for Let's Encrypt
-  email contact@pairqr.app
-}
-
+# 1) HTTPS
 api.pairqr.app {
   encode gzip
-
-  reverse_proxy pairqr:3000 {
-    header_up X-Forwarded-Proto {scheme}
-    header_up X-Forwarded-Host  {host}
+  reverse_proxy pairqr:3000
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "no-referrer"
   }
+}
+
+# 2) HTTP 
+http://api.pairqr.app {
+  route /health {
+    respond "ok" 200
+  }
+  redir https://api.pairqr.app{uri}
 }
