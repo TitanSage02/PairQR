@@ -1,312 +1,194 @@
-# PairQR - Secure Instant Communication
+# PairQR — Instant, Encrypted Sharing
 
-> 🔒 Instant secure file and text sharing with QR code pairing
+> 🔒 Share text and files peer-to-peer with end-to-end encryption and QR code pairing.
 
-PairQR is a privacy-first communication platform that enables secure peer-to-peer messaging and file sharing through QR code pairing. Built with modern web technologies and end-to-end encryption.
+**PairQR** is a privacy-first platform that spins up ephemeral sessions to exchange text and files with ease. Pair via **QR code**, connect peers over **WebRTC**, and keep data **encrypted client-side**.
+
+---
 
 ## ✨ Features
 
-- **� End-to-End Encryption**: All messages encrypted client-side
-- **📱 QR Code Pairing**: Instant session creation via QR scanning
-- **⚡ Real-time Communication**: WebRTC peer-to-peer messaging
-- **🎯 Privacy-First**: No data persistence, ephemeral sessions
-- **📁 File Sharing**: Secure file transfer between devices
-- **👨‍💼 Admin Dashboard**: Comprehensive management interface
-- **🌐 Cross-Platform**: Works on all modern browsers
+* **End-to-end encryption** — data is encrypted in the browser; the server can’t read it
+* **QR code pairing** — create a session with a simple scan
+* **Real-time** — secure P2P messaging and file transfer with WebRTC
+* **Ephemeral sessions** — no persistence 
+* **Admin dashboard** — basic management & metrics
+* **Cross-platform** — works on modern browsers
 
-## �️ Architecture
+---
 
-This project follows a clean separation between frontend and backend:
+## 🧱 Monorepo Architecture
 
 ```
 PairQR/
-├── client/           # React + Vite Frontend
-│   ├── src/
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── tailwind.config.ts
-│   └── tsconfig.json
-├── server/           # Express.js Backend
-│   ├── admin.ts
-│   ├── index.ts
-│   ├── routes.ts
-│   ├── storage.ts
-│   ├── package.json
-│   ├── drizzle.config.ts
-│   └── tsconfig.json
-├── shared/           # Shared TypeScript schemas
-│   └── schema.ts
+├─ client/              # React + Vite (TypeScript)
+│  └─ ...
+├─ server/              # Node/Express (TypeScript)
+│  ├─ src/*.ts
+│  ├─ docker-compose.yml    # prod stack: caddy, api, redis, postgres, coturn
+│  ├─ Caddyfile             # reverse proxy + TLS
+│  └─ ...
+├─ shared/              # Shared types & schemas (TS/Zod)
+└─ scripts/             # Scripts (e.g., start.sh)
 ```
 
-### 📱 Client (Frontend)
-- **Framework**: React 18 + TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS + shadcn/ui
-- **State Management**: TanStack Query
-- **WebRTC**: Native browser APIs
-- **QR Code**: jsqr library
+**Client**: React 18, TypeScript, Vite, Tailwind, shadcn/ui, TanStack Query, QR (jsqr)
+**Server**: Node.js + Express, Drizzle ORM + PostgreSQL, WebSocket (ws), JWT (admin), Helmet, CORS, rate-limit
+**P2P**: WebRTC; **STUN/TURN** via **coturn** for NAT traversal
+**Prod**: Docker Compose (Caddy TLS proxy, API, Redis, Postgres, coturn), GitHub Actions (CI/CD), DNS (Cloudflare/Vercel/Registrar)
 
-### 🖥️ Server (Backend)
-- **Runtime**: Node.js + Express
-- **Database**: PostgreSQL with Drizzle ORM
-- **WebSocket**: ws library for real-time communication
-- **Authentication**: JWT for admin sessions
-- **Security**: Helmet, CORS, Rate limiting
+---
 
-### 🔄 Shared
-- **Schema Validation**: Zod schemas
-- **Type Safety**: Shared TypeScript interfaces
-## 🚀 Quick Start
+## 🚀 Local Development
 
-### Prerequisites
+> Requirements: **Node.js 18+**, **npm** (or pnpm/yarn), and **PostgreSQL** if you use DB features.
 
-- Node.js 18+ 
-- PostgreSQL (for database features)
-- npm or yarn
+```bash
+# Install deps at the repo root (or per package)
+npm install
 
+# Frontend
+cd client
+npm run dev
 
+# Backend
+cd ../server
+# configure server/.env (see below)
+npm run dev
+```
+
+---
 
 ## 🔧 Configuration
 
-### Client Configuration
+Create **`server/.env`** (minimal example):
 
-The client uses Vite for building and development:
-- `vite.config.ts` - Build configuration
-- `tailwind.config.ts` - Styling configuration  
-- `tsconfig.json` - TypeScript configuration
+```env
+# Runtime
+NODE_ENV=production
+PORT=3000
 
-### Server Configuration
+# Secrets (use strong values)
+ADMIN_PASSWORD=change_me
+HMAC_SECRET=change_me
+JWT_SECRET=change_me
+TURN_STATIC_SECRET=change_me
 
-The server uses standard Node.js tooling:
-- `drizzle.config.ts` - Database ORM configuration
-- `tsconfig.json` - TypeScript configuration
-- Environment variables for runtime configuration
+# CORS (comma-separated; ideally no spaces)
+CORS_ORIGIN=https://pairqr.vercel.app,https://pairqr.app
 
-## 🚢 Deployment
-
-### Client Deployment (Vercel/Netlify)
-
-```bash
-cd client
-npm run build
-# Deploy the dist/ folder
+# Internal services
+REDIS_URL=redis://redis:6379
+REDIS_TTL_SECONDS=300
+DATABASE_URL=postgres://postgres:postgres@postgres:5432/pairqr
+TURN_REALM=pairqr
+TURN_URIS=turn:coturn:3478?transport=udp,turn:coturn:3478?transport=tcp
 ```
 
-### Server Deployment (Railway/Heroku/VPS)
+> **Heads-up**: if any secret contains **`$`**, escape it as **`$$`** in `.env` (Docker Compose treats `$VAR` as interpolation).
 
-```bash
-cd server  
-npm run build
-# Deploy with npm start or PM2
+---
+
+## 🐳 Production (Docker Compose)
+
+The prod stack (in `server/docker-compose.yml`) runs:
+
+* **caddy** — reverse proxy + Let’s Encrypt TLS (ports **80/443**) → proxies to `pairqr:3000`
+* **pairqr** — your Node/Express API (**3000** internal only)
+* **redis** — cache / sessions
+* **postgres** — database
+* **coturn** — STUN/TURN (**3478** UDP/TCP)
+
+**Caddyfile** (example):
+
+```caddyfile
+# HTTPS
+api.pairqr.app {
+  encode gzip
+  reverse_proxy pairqr:3000
+}
+
+# HTTP: /health => 200, everything else redirects to HTTPS (optional)
+http://api.pairqr.app {
+  route /health {
+    respond "ok" 200
+  }
+  redir https://api.pairqr.app{uri}
+}
 ```
 
-### Docker Deployment
+---
 
-```dockerfile
-# Example Dockerfile for server
-FROM node:18-alpine
-WORKDIR /app
-COPY server/package*.json ./
-RUN npm ci --only=production
-COPY server/ ./
-COPY shared/ ./shared/
-EXPOSE 9000
-CMD ["npm", "start"]
-```
 
-### VPS (DigitalOcean) via Docker + GitHub Actions
+## 🤖 CI/CD (Recommended)
 
-Ce dépôt contient un workflow prêt à l’emploi pour déployer le backend sur un Droplet via Docker Compose et SSH.
+Typical GitHub Actions pipeline:
 
-1) Prérequis
-- Un Droplet Ubuntu (x64) accessible en SSH (IP publique, port 22 par défaut)
-- Une clé SSH (privée côté GitHub, publique installée sur le Droplet)
-- Un répertoire cible sur le Droplet, ex. `/opt/pairqr`
+1. **Build** the server Docker image (multi-stage, `npm ci`) and push to **GHCR**.
+2. **SSH** into the server, write `server/.env` from GitHub Secrets, set `SERVER_IMAGE`.
+3. `docker compose pull && up -d`, then perform an **HTTPS healthcheck** (expect **200**).
 
-2) Préparer le Droplet (une seule fois)
-- Connecte-toi en SSH et crée le dossier projet:
-	- `sudo mkdir -p /opt/pairqr && sudo chown $USER:$USER /opt/pairqr`
-- Optionnel: activer et configurer UFW si pas déjà fait:
-	- `sudo ufw allow OpenSSH && sudo ufw allow 3000/tcp && sudo ufw allow 3478/tcp && sudo ufw allow 3478/udp && sudo ufw enable`
-- Docker est installé automatiquement par le workflow si absent.
+**GitHub Secrets** (Settings → Secrets and variables → Actions):
 
-3) Configurer les Secrets GitHub (Settings > Secrets and variables > Actions)
-- Connexion SSH
-	- `DO_HOST`: IP/nom du Droplet (ex: 203.0.113.10)
-	- `DO_SSH_USER`: utilisateur SSH (ex: root ou un sudoer)
-	- `DO_SSH_KEY`: contenu de la clé privée SSH (PEM)
-	- `DO_SSH_PORT`: port SSH (ex: 22)
-	- `PROJECT_DIR`: répertoire cible sur le Droplet (ex: `/opt/pairqr`)
-- Secrets applicatifs (voir `server/.env.example`)
-	- `ADMIN_PASSWORD`
-	- `HMAC_SECRET`
-	- `JWT_SECRET`
-	- `CORS_ORIGIN` (ex: `https://pairqr.vercel.app,https://ton-domaine.com`)
-	- `TURN_STATIC_SECRET`
-- Optionnels (si tu veux surcharger les valeurs par défaut): `SESSION_TTL_MINUTES`, `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, `REDIS_TTL_SECONDS`, `DATABASE_URL`, `TURN_REALM`, `TURN_URIS`, `REDIS_URL`.
+* SSH/Droplet: `DO_HOST`, `DO_SSH_USER`, `DO_SSH_KEY` (optionally `DO_SSH_PORT`, `DO_SSH_PASSPHRASE`), `PROJECT_DIR`
+* App: `ADMIN_PASSWORD`, `HMAC_SECRET`, `JWT_SECRET`, `CORS_ORIGIN`, `TURN_STATIC_SECRET`
+* Optional: `DATABASE_URL`, `REDIS_URL`, `TURN_REALM`, `TURN_URIS`, `RATE_LIMIT_*`, `SESSION_TTL_MINUTES`, etc.
 
-4) Déclencher le déploiement
-- Pousse sur la branche `main` (les modifications dans `server/**`, `shared/**`, `scripts/**` déclenchent le workflow)
-- Le workflow `.github/workflows/deploy-backend.yml` va:
-	- Copier `server/`, `shared/`, `scripts/` sur le Droplet
-	- Écrire `server/.env` sur le Droplet à partir des secrets
-	- Lancer `docker compose -f server/docker-compose.yml up -d --build`
+> In the script that writes `.env`, **escape `$`** as `$$` to avoid interpolation warnings and corrupted values.
 
-5) Vérifications
-- Santé API: `curl http://<IP_DROPLET>:3000/health`
-- Conteneurs: `ssh <user>@<ip> "docker ps"`
-- Logs backend: `ssh <user>@<ip> "docker logs -f pairqr-app"`
-
-6) Mises à jour / Rollback
-- Toute modification pushée sur `main` redéploie automatiquement.
-- Pour revenir en arrière: fais un `git revert` du commit problématique et push à nouveau sur `main`.
-
-7) Conseils prod
-- Place le backend derrière un reverse proxy (Nginx/Caddy) + TLS.
-- Ajuste `CORS_ORIGIN` avec tes domaines réels.
-- Garde `ADMIN_PASSWORD`, `JWT_SECRET`, `HMAC_SECRET`, `TURN_STATIC_SECRET` forts et privés.
-
-Chemin du workflow: `.github/workflows/deploy-backend.yml`
-
+---
 
 ## 🔒 Security
 
-- **End-to-End Encryption**: Messages encrypted client-side before transmission
-- **Ephemeral Sessions**: No persistent data storage by default
-- **CORS Protection**: Configurable origin allowlists
-- **Rate Limiting**: API protection against abuse
-- **Secure Headers**: Helmet.js security headers
-- **Input Validation**: Zod schema validation on all inputs
+* **E2EE**: encrypted client-side; server relays but can’t read content
+* **Ephemeral**: messages are not persisted by default
+* **CORS**: strict allowlist (production frontends only)
+* **Rate limiting**: basic API abuse protection
+* **Headers**: Helmet on the app + security headers on Caddy
+* **Validation**: Zod on critical inputs
 
-## 📈 Monitoring
+---
 
-### Built-in Analytics
+## 🩺 Health & Logs
 
-- Session creation metrics
-- Message throughput tracking  
-- Error rate monitoring
-- Admin dashboard with real-time stats
+* **Health**: `GET /health` → **200** (via `https://api.pairqr.app/health`)
+* **Logs**:
 
-### Health Checks
+  * backend: `docker logs -f pairqr-app`
 
-- `GET /health` - Server health status
-- `GET /api/health` - Detailed API health with metrics
+---
+
+## 🛠 Troubleshooting (Quick FAQ)
+
+* **Healthcheck returns 308**: you are probing HTTP while Caddy redirects to HTTPS. Probe **HTTPS** instead (`curl -L https://api…/health`), or keep the HTTP block that serves `/health` as 200.
+* **`The "U" variable is not set`**: a `$` in `.env` wasn’t escaped → replace `$` with `$$`.
+* **Node build OOM**: use `npm ci`, keep `package-lock.json`, multi-stage Docker, and/or build the image in CI (not on the VPS).
+* **TURN behind Cloudflare**: don’t proxy UDP; keep **DNS only** for the TURN/API subdomain if you rely on UDP and ACME HTTP-01.
+
+---
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make changes in the appropriate directory (`client/` or `server/`)
-4. Run type checking: `npm run check`
-5. Test your changes locally
-6. Submit a pull request
-
-### Development Guidelines
-
-- Keep client and server completely separate
-- Use shared schemas for data validation
-- Follow TypeScript best practices
-- Add appropriate error handling
-- Update documentation for new features
-
-## 📝 License
-
-This project is open source. See the LICENSE file for details.
-
-## � Links
-
-- **Live Demo**: [pairqr.vercel.app](https://pairqr.vercel.app)
-- **Repository**: [github.com/TitanSage02/PairQR](https://github.com/TitanSage02/PairQR)
-- **Issues**: [GitHub Issues](https://github.com/TitanSage02/PairQR/issues)
+1. Fork
+2. Branch: `feat/my-feature`
+3. Dev: `npm run dev` (client/server)
+4. Checks: `npm run check`, tests if present
+5. Open a PR with a clear description and docs updates if needed
 
 ---
-
-Built with ❤️ for secure, privacy-first communication.
-- **HMAC Signatures**: Tamper-proof session verification  
-- **No Data Persistence**: Messages never stored on servers
-- **WebRTC Direct Connection**: Bypasses server for data transfer
-- **Content Security Policy**: Protects against XSS attacks
-
-## 📊 Analytics & Privacy
-
-PairQR includes privacy-first analytics that:
-
-- ✅ Collects anonymous usage statistics
-- ✅ Helps improve the product
-- ✅ Respects user privacy (GDPR compliant)
-- ❌ Never collects personal information
-- ❌ Never stores messages or files
-- ❌ Never tracks users across sessions
-
-Users can opt-out of analytics at any time.
-
-## 🛠 Development
-
-### Local Development
-
-```bash
-# Start development servers
-npm run dev
-
-# Run type checking
-npm run check
-
-# Build for production
-npm run build
-```
-
-### Testing
-
-```bash
-# Run tests
-npm test
-
-# Run tests with coverage
-npm run test:coverage
-```
-
-### Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
-## 📈 Roadmap
-
-### Current (Free Forever)
-- ✅ Text sharing
-- ✅ Basic file transfer
-- ✅ QR code connections
-- ✅ End-to-end encryption
-
-### Coming Soon (Premium)
-- 🔄 Team collaboration spaces
-- 🔄 Faster transfer speeds
-- 🔄 Advanced security features
-- 🔄 File expiration controls
-- 🔄 Custom branding
-- 🔄 Usage analytics
-
-## 🤝 Support
-
-- **Issues**: [GitHub Issues](https://github.com/TitanSage02/PairQR/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/TitanSage02/PairQR/discussions)
-- **Email**: support@pairqr.app
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- WebRTC for enabling peer-to-peer connections
-- React and modern web technologies
-- The open-source community
+MIT — see **LICENSE**.
 
 ---
 
-**PairQR** - Share files instantly, securely, and privately. No registration required, always free.
+## 🔗 Links
 
-Made with ❤️ for privacy and security.
+* **Demo**: [https://pairqr.vercel.app](https://pairqr.vercel.app)
+* **Repo**: [https://github.com/TitanSage02/PairQR](https://github.com/TitanSage02/PairQR)
+* **Issues**: [https://github.com/TitanSage02/PairQR/issues](https://github.com/TitanSage02/PairQR/issues)
+
+---
+
+*Built with ❤️ for simple, private, and secure communication.*
