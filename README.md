@@ -179,13 +179,13 @@ Typical GitHub Actions pipeline:
 
 ## 📄 License
 
-MIT — see **LICENSE**.
+See **LICENSE**.
 
 ---
 
 ## 🔗 Links
 
-* **Demo**: [https://pairqr.vercel.app](https://pairqr.vercel.app)
+* **Demo**: [https://pairqr.app](https://pairqr.vercel.app)
 * **Repo**: [https://github.com/TitanSage02/PairQR](https://github.com/TitanSage02/PairQR)
 * **Issues**: [https://github.com/TitanSage02/PairQR/issues](https://github.com/TitanSage02/PairQR/issues)
 
