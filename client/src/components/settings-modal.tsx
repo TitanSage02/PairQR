@@ -4,11 +4,6 @@ import {
   Download, 
   Upload, 
   RotateCcw, 
-  Shield, 
-  MessageSquare, 
-  Palette, 
-  Database, 
-  Info, 
   CheckCircle 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -122,30 +117,26 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[520px] max-h-[80vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Settings className="h-5 w-5" />
             Settings
           </DialogTitle>
-          <DialogDescription>
-            Configure your PairQR experience and preferences
+          <DialogDescription className="text-xs sm:text-sm">
+            Configure your preferences and data
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="space-y-6">
-          {/* Chat Settings */}
+
+        <div className="space-y-5 sm:space-y-6">
+          {/* Preferences */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Chat Settings
-            </h3>
-            
+            <h3 className="text-base sm:text-lg font-medium">Preferences</h3>
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between gap-4">
                 <div className="space-y-0.5">
                   <Label htmlFor="auto-clear">Auto-clear messages</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Automatically clear messages when session ends
                   </p>
                 </div>
@@ -155,11 +146,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   onCheckedChange={(checked) => updateSetting('autoClear', checked)}
                 />
               </div>
-              
-              <div className="flex items-center justify-between">
+
+              <div className="flex items-start justify-between gap-4">
                 <div className="space-y-0.5">
                   <Label htmlFor="show-typing">Show typing indicators</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Display when others are typing
                   </p>
                 </div>
@@ -169,161 +160,127 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   onCheckedChange={(checked) => updateSetting('showTyping', checked)}
                 />
               </div>
-            </div>
-          </div>
 
-          <Separator />
-
-          {/* Security Settings */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Security Settings
-            </h3>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="require-https">Require HTTPS</Label>
-                <p className="text-sm text-muted-foreground">
-                  Only allow secure connections
-                </p>
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="require-https">Require HTTPS</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Only allow secure connections
+                  </p>
+                </div>
+                <Switch
+                  id="require-https"
+                  checked={settings.requireHttps}
+                  onCheckedChange={(checked) => updateSetting('requireHttps', checked)}
+                />
               </div>
-              <Switch
-                id="require-https"
-                checked={settings.requireHttps}
-                onCheckedChange={(checked) => updateSetting('requireHttps', checked)}
-              />
-            </div>
-          </div>
 
-          <Separator />
-
-          {/* Appearance Settings */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium flex items-center gap-2">
-              <Palette className="h-4 w-4" />
-              Appearance
-            </h3>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="dark-mode">Dark mode</Label>
-                <p className="text-sm text-muted-foreground">
-                  Use dark theme interface
-                </p>
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="dark-mode">Dark mode</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Use dark theme interface
+                  </p>
+                </div>
+                <Switch
+                  id="dark-mode"
+                  checked={settings.darkMode}
+                  onCheckedChange={(checked) => updateSetting('darkMode', checked)}
+                />
               </div>
-              <Switch
-                id="dark-mode"
-                checked={settings.darkMode}
-                onCheckedChange={(checked) => updateSetting('darkMode', checked)}
-              />
             </div>
           </div>
 
           <Separator />
 
-          {/* Data Management */}
+          {/* Data */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium flex items-center gap-2">
-              <Database className="h-4 w-4" />
-              Data Management
-            </h3>
-            
-            <div className="grid grid-cols-1 gap-3">
+            <h3 className="text-base sm:text-lg font-medium">Data</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Button 
                 variant="outline" 
                 onClick={exportSettings}
-                className="justify-start"
+                className="justify-center sm:justify-start"
               >
                 <Download className="h-4 w-4 mr-2" />
-                Export Settings
+                Export
               </Button>
-              
+
               <Button 
                 variant="outline" 
                 onClick={importSettings}
-                className="justify-start"
+                className="justify-center sm:justify-start"
               >
                 <Upload className="h-4 w-4 mr-2" />
-                Import Settings
+                Import
               </Button>
-              
+
               <Button 
                 variant="outline" 
                 onClick={resetSettings}
-                className="justify-start text-destructive hover:text-destructive"
+                className="justify-center sm:justify-start text-destructive hover:text-destructive"
               >
                 <RotateCcw className="h-4 w-4 mr-2" />
-                Reset to Defaults
+                Reset
               </Button>
             </div>
           </div>
 
           <Separator />
 
-          {/* System Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium flex items-center gap-2">
-              <Info className="h-4 w-4" />
-              System Information
-            </h3>
-            
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Browser:</span>
-                <span>{navigator.userAgent.split(' ').slice(-2).join(' ')}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Camera Support:</span>
-                <span className={navigator.mediaDevices ? "text-green-600" : "text-red-600"}>
-                  {navigator.mediaDevices ? "Available" : "Not Available"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">WebRTC Support:</span>
-                <span className={window.RTCPeerConnection ? "text-green-600" : "text-red-600"}>
-                  {window.RTCPeerConnection ? "Available" : "Not Available"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Local Storage:</span>
-                <span className={localStorage ? "text-green-600" : "text-red-600"}>
-                  {localStorage ? "Available" : "Not Available"}
-                </span>
-              </div>
-            </div>
-          </div>
+          {/* About & System */}
+          <div className="space-y-3">
+            <h3 className="text-base sm:text-lg font-medium">About & System</h3>
 
-          {/* About Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium flex items-center gap-2">
-              <Info className="h-4 w-4" />
-              About PairQR
-            </h3>
-            
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Version:</span>
-                <span>1.0.0</span>
+            <div className="grid grid-cols-1 gap-2 text-sm">
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-muted-foreground">Version</span>
+                <span className="font-medium">1.0.0</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Protocol:</span>
-                <span>WebRTC + E2EE</span>
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-muted-foreground">Protocol</span>
+                <span className="font-medium">WebRTC + E2EE</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Encryption:</span>
-                <span>AES-256-GCM</span>
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-muted-foreground">Encryption</span>
+                <span className="font-medium">AES-256-GCM</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">License:</span>
-                <span>MIT</span>
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-muted-foreground">License</span>
+                <span className="font-medium">MIT</span>
+              </div>
+
+              <Separator />
+
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-muted-foreground">Browser</span>
+                <span className="text-right truncate max-w-[60%]" title={navigator.userAgent}>
+                  {navigator.userAgent.split(' ').slice(-2).join(' ')}
+                </span>
+              </div>
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-muted-foreground">Camera</span>
+                <span className={navigator.mediaDevices ? 'text-green-600' : 'text-red-600'}>
+                  {navigator.mediaDevices ? 'Available' : 'Not Available'}
+                </span>
+              </div>
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-muted-foreground">WebRTC</span>
+                <span className={window.RTCPeerConnection ? 'text-green-600' : 'text-red-600'}>
+                  {window.RTCPeerConnection ? 'Available' : 'Not Available'}
+                </span>
+              </div>
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-muted-foreground">Local Storage</span>
+                <span className={localStorage ? 'text-green-600' : 'text-red-600'}>
+                  {localStorage ? 'Available' : 'Not Available'}
+                </span>
               </div>
             </div>
-            
-            <div className="pt-4 border-t border-border">
-              <p className="text-xs text-muted-foreground">
-                © 2024 Espérance AYIWAHOUN. No data is stored on our servers. 
-                All communications are encrypted end-to-end.
+
+            <div className="pt-3 sm:pt-4 border-t border-border">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                © 2024 Espérance AYIWAHOUN. No data is stored on our servers. All communications are encrypted end-to-end.
               </p>
             </div>
           </div>
@@ -338,4 +295,4 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       </DialogContent>
     </Dialog>
   );
-}
+
