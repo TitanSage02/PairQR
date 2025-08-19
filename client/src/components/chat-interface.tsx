@@ -136,7 +136,7 @@ export function ChatInterface({
               key={message.id} 
               className={`flex ${message.isLocal ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`px-4 py-3 rounded-lg max-w-xs lg:max-w-md ${
+              <div className={`inline-block px-4 py-3 rounded-lg max-w-[80%] sm:max-w-[75%] md:max-w-[70%] break-words whitespace-pre-wrap ${
                 message.isLocal 
                   ? 'bg-primary text-white' 
                   : 'bg-white border border-gray-200 text-gray-900'
