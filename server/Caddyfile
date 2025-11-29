@@ -16,3 +16,33 @@ http://api.pairqr.app {
   }
   redir https://api.pairqr.app{uri}
 }
+
+# 3) RH Agent API
+api-rh.pairqr.com {
+    # Reverse proxy vers FastAPI (port 8000)
+    reverse_proxy localhost:8000
+
+    # Limite d'upload pour CV (5MB)
+    request_body {
+      max_size 5MB
+    }
+
+    # Headers de sécurité
+    header {
+        -Server
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Logs
+    log {
+        output file /var/log/caddy/rh-agent.log
+        format console
+    }
+
+    # Automatic HTTPS (Let's Encrypt)
+    tls {
+        protocols tls1.2 tls1.3
+    }
+}
